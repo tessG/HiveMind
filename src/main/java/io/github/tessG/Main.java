@@ -20,7 +20,8 @@ public class Main {
             postsString.append(p).append("\n");
         }
 // API key loaded from ANTHROPIC_API_KEY environment variable (not hardcoded)
-       AnthropicClient client = AnthropicOkHttpClient.fromEnv();
+        AnthropicClient client;
+        client = AnthropicOkHttpClient.fromEnv();
 
         MessageCreateParams params = MessageCreateParams.builder()
                 .model("claude-sonnet-4-5-20250929")
