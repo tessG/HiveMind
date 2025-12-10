@@ -22,9 +22,7 @@ public class Main {
 
        AnthropicClient client = AnthropicOkHttpClient.fromEnv();
 
-     /*   AnthropicClient client = Anthropic.builder()
-                .apiKey(apiKey)
-                .build();*/
+
 
         MessageCreateParams params = MessageCreateParams.builder()
                 .model("claude-sonnet-4-5-20250929")
