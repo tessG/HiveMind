@@ -22,8 +22,6 @@ public class Main {
 
        AnthropicClient client = AnthropicOkHttpClient.fromEnv();
 
-
-
         MessageCreateParams params = MessageCreateParams.builder()
                 .model("claude-sonnet-4-5-20250929")
                 .maxTokens(1000)
