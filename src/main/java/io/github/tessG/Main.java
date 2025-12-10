@@ -20,8 +20,8 @@ public class Main {
             System.out.println(p);
             postsString.append(p).append("\n");
         }
-        String apiKey ="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";
-        AnthropicClient client = AnthropicOkHttpClient.fromEnv();
+
+       AnthropicClient client = AnthropicOkHttpClient.fromEnv();
 
      /*   AnthropicClient client = Anthropic.builder()
                 .apiKey(apiKey)
