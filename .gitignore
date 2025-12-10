@@ -26,3 +26,4 @@ pom.xml.versionsBackup
 *.env
 config.properties
 secrets.properties.idea/workspace.xml
+.DS_Store
