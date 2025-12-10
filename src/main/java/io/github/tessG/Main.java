@@ -19,7 +19,7 @@ public class Main {
             System.out.println(p);
             postsString.append(p).append("\n");
         }
-
+// API key loaded from ANTHROPIC_API_KEY environment variable (not hardcoded)
        AnthropicClient client = AnthropicOkHttpClient.fromEnv();
 
         MessageCreateParams params = MessageCreateParams.builder()
