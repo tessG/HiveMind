@@ -25,4 +25,4 @@ pom.xml.versionsBackup
 # API Keys and secrets
 *.env
 config.properties
-secrets.properties
+secrets.properties.idea/workspace.xml
