@@ -73,33 +73,46 @@ public class PadletToMiroWorkflow {
      */
     private List<String> fetchPadletStatements(String padletId) throws Exception {
         // Padlet API endpoint (adjust based on actual API)
-        String url = "https://api.padlet.com/v1/padlets/" + padletId + "/posts";
-        
+     //   String url = "https://api.padlet.com/v1/padlets/" + padletId + "/posts";
+        String url = "https://api.padlet.dev/v1/boards/" + padletId + "?include=posts";
+
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(url))
-            .header("Authorization", "Bearer " + padletApiKey)
-            .header("Accept", "application/json")
+            .header("X-API-KEY", padletApiKey)
+            .header("Accept", "application/vnd.api+json")
             .GET()
             .build();
-        
-        HttpResponse<String> response = httpClient.send(request, 
-            HttpResponse.BodyHandlers.ofString());
-        
+
+        HttpResponse<String> response = httpClient.send(request,
+                HttpResponse.BodyHandlers.ofString());
+
         if (response.statusCode() != 200) {
             throw new RuntimeException("Failed to fetch from Padlet: " + response.body());
         }
-        
-        // Parse response and extract statement text
+
         JsonObject responseBody = gson.fromJson(response.body(), JsonObject.class);
-        JsonArray posts = responseBody.getAsJsonArray("posts");
-        
+
+        // Posts are in the "included" array, not "data.posts"
+        JsonArray included = responseBody.getAsJsonArray("included");
+
         List<String> statements = new ArrayList<>();
-        for (int i = 0; i < posts.size(); i++) {
-            JsonObject post = posts.get(i).getAsJsonObject();
-            String text = post.get("body").getAsString();
-            statements.add(text);
+        if (included != null) {
+            for (int i = 0; i < included.size(); i++) {
+                JsonObject post = included.get(i).getAsJsonObject();
+
+                // Check if this is a post (not a section)
+                if (post.get("type").getAsString().equals("post")) {
+                    JsonObject attributes = post.getAsJsonObject("attributes");
+                    JsonObject content = attributes.getAsJsonObject("content");
+                    String bodyHtml = content.get("bodyHtml").getAsString();
+
+                    // Strip HTML tags to get plain text
+                    String plainText = bodyHtml.replaceAll("<[^>]*>", " ").trim();
+                    statements.add(plainText);
+                }
+            }
         }
-        
+
         return statements;
     }
     
@@ -161,23 +174,50 @@ public class PadletToMiroWorkflow {
      * Parse Claude's analysis into StudentInsights object
      */
     private StudentInsights parseClaudeAnalysis(String analysisText) {
-        // Extract JSON from Claude's response (it might include explanation text)
-        int jsonStart = analysisText.indexOf("{");
-        int jsonEnd = analysisText.lastIndexOf("}") + 1;
-        String jsonText = analysisText.substring(jsonStart, jsonEnd);
-        
-        JsonObject analysis = gson.fromJson(jsonText, JsonObject.class);
-        
-        String headline = analysis.get("headline").getAsString();
-        List<String> dare = jsonArrayToList(analysis.getAsJsonArray("dare"));
-        List<String> share = jsonArrayToList(analysis.getAsJsonArray("share"));
-        List<String> care = jsonArrayToList(analysis.getAsJsonArray("care"));
-        String summary = analysis.get("summary").getAsString();
-        String keyInsight = analysis.get("keyInsight").getAsString();
-        
-        return new StudentInsights(headline, dare, share, care, summary, keyInsight);
+        System.out.println("RAW Claude response: " + analysisText);
+
+        // Remove everything before the first ```json
+        int jsonMarkerStart = analysisText.indexOf("```json");
+        if (jsonMarkerStart != -1) {
+            analysisText = analysisText.substring(jsonMarkerStart);
+        }
+
+        // Remove everything after the last ```
+        int jsonMarkerEnd = analysisText.lastIndexOf("```");
+        if (jsonMarkerEnd != -1 && jsonMarkerEnd > jsonMarkerStart) {
+            analysisText = analysisText.substring(0, jsonMarkerEnd);
+        }
+
+        // Now remove the ```json markers
+        analysisText = analysisText.replaceAll("```json\\s*", "");
+        analysisText = analysisText.replaceAll("```", "");
+
+        // Remove any Java object notation that leaked through
+        analysisText = analysisText.replaceAll("\\{citations=.*?type=text.*?\\}", "");
+        analysisText = analysisText.replaceAll(", type=text, additionalProperties=\\{\\}\\}", "");
+
+        // Trim whitespace
+        String jsonText = analysisText.trim();
+
+        System.out.println("Cleaned JSON: " + jsonText);
+
+        try {
+            JsonObject analysis = gson.fromJson(jsonText, JsonObject.class);
+
+            String headline = analysis.get("headline").getAsString();
+            List<String> dare = jsonArrayToList(analysis.getAsJsonArray("dare"));
+            List<String> share = jsonArrayToList(analysis.getAsJsonArray("share"));
+            List<String> care = jsonArrayToList(analysis.getAsJsonArray("care"));
+            String summary = analysis.get("summary").getAsString();
+            String keyInsight = analysis.get("keyInsight").getAsString();
+
+            return new StudentInsights(headline, dare, share, care, summary, keyInsight);
+        } catch (Exception e) {
+            System.err.println("Parse error. Cleaned text was:");
+            System.err.println(jsonText);
+            throw new RuntimeException("Failed to parse: " + e.getMessage(), e);
+        }
     }
-    
     /**
      * Helper to convert JsonArray to List<String>
      */
@@ -217,12 +257,14 @@ public class PadletToMiroWorkflow {
 */
     public static void main(String[] args) {
         // Configuration - replace with your actual API keys
-        String padletApiKey = "YOUR_PADLET_API_KEY";
-        String claudeApiKey = System.getenv("MIRO_ACCESS_TOKEN");
+        String padletApiKey =  System.getenv("PADLET_API_KEY");
         String miroAccessToken = System.getenv("MIRO_ACCESS_TOKEN");
 
         String padletId = "wmzx0ad7z03mqxia";//wmzx0ad7z03mqxia
-        
+        String url = "https://api.padlet.com/v1/padlets/" + padletId;
+        //https://api.padlet.dev/v1/boards/
+        System.out.println(url);
+
         PadletToMiroWorkflow workflow = new PadletToMiroWorkflow(padletApiKey, miroAccessToken);
         
         try {

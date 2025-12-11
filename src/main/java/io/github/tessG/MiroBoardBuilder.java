@@ -57,7 +57,7 @@ public class MiroBoardBuilder {
 
         // Create header
         createHeaderShape(boardId, insights.getMainHeadline(), 0, -100);
-        createTextItem(boardId, "Klassens værdier og fælles mål", 0, 50, 2500, 20);
+        createTextItem(boardId, "Klassens værdier og fælles mål", 0, 50, 2500, 50);
 
         // Create three columns with card backgrounds
         createCardColumn(boardId, "🔥 DARE", insights.getDareItems(), START_X, START_Y, COLOR_DARE);
@@ -234,7 +234,7 @@ public class MiroBoardBuilder {
 
     private void createSummarySection(String boardId, String summary, String keyInsight, double y) throws Exception {
         // Summary title
-        createTextItem(boardId, "📝 Sammenfatning", 0, y - 50, 800, 24);
+        createTextItem(boardId, "📝 Sammenfatning", 0, y - 50, 3000, 70);
 
         // Summary box
         createCard(boardId, summary, 0, y + 50, COLOR_SUMMARY);
