@@ -35,40 +35,7 @@ public class GenericEvaluationWorkflow {
         this.gson = new Gson();
     }
     
-    /**
-     * Execute workflow for any evaluation type
-     */
-   /* public String executeWorkflow(String padletId, String evaluationType) throws Exception {
-        System.out.println("🔄 Starting workflow for: " + evaluationType);
-        
-        // Get configuration for this evaluation type
-        EvaluationConfig config = EvaluationConfigFactory.getConfig(evaluationType);
-        
-        // Step 1: Fetch statements from Padlet
-        System.out.println("📥 Fetching statements from Padlet...");
-        List<String> statements = fetchPadletStatements(padletId);
-        System.out.println("✅ Retrieved " + statements.size() + " statements");
-        
-        // Step 2: Analyze with Claude
-        System.out.println("🤖 Analyzing with Claude API...");
-        EvaluationInsights insights = analyzeWithClaude(statements, config);
-        System.out.println("✅ Analysis complete");
-        
-        // Step 3: Create Miro board
-        System.out.println("🎨 Creating Miro board...");
-        GenericMiroBoardBuilder builder = new GenericMiroBoardBuilder(miroAccessToken);
-        String boardId = builder.createInsightsBoard(
-            insights, 
-            config,
-            config.getTitle() + " - " + java.time.LocalDate.now()
-        );
-        System.out.println("✅ Board created successfully!");
 
-        String boardUrl = "https://miro.com/app/board/" + boardId;
-        System.out.println("🔗 View at: " + boardUrl);
-        
-        return boardUrl;
-    }*/
     public String executeWorkflow(String padletId, String evaluationType) throws Exception {
         System.out.println("🔄 Starting workflow for: " + evaluationType);
 
@@ -131,7 +98,7 @@ public class GenericEvaluationWorkflow {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(url))
             .header("X-API-KEY", padletApiKey)
-            .header("Accept", "application/json")
+            .header("Accept", "application/vnd.api+json")
             .GET()
             .build();
         
@@ -196,17 +163,20 @@ public class GenericEvaluationWorkflow {
 
         prompt.append("\nLav en struktureret analyse og GENERER EN KOMPLET HTML POSTER.\n\n");
         prompt.append("Inkluder:\n");
-        prompt.append("1. En overordnet headline der samler budskabet\n");
-        prompt.append("2. Kategoriserede punkter under hver kategori\n");
-        prompt.append("3. En sammenfatning\n");
-        prompt.append("4. En nøgleindsigt\n");
-        prompt.append("5. Find et humoristisk udsagn og placer det i sin egen fremhævet boks\n\n");
+        prompt.append("1. En titel 'Student Vibes' og en subtitle sætning som anvender 3 vigtige nøgleord\n");
+        prompt.append("2. En wordcloud (MINIMUM 20 ORD) på baggrund af alle udsagnene. Hvid baggrund, Gul, Rød eller Grøn font med sort outline/slagsskygge\n");
+        prompt.append("3. rundt om wordclouden placeres ALLE udsagn i talebobler, træk pil hen til det ord i wordclouden som udsagnet relaterer til.\n ");
+        prompt.append("VIGTIGT: Undgå at udsagn og ord overlapper\n");
+        prompt.append("4. En sammenfatning\n");
+        prompt.append("5. En nøgleindsigt\n");
+        prompt.append("6. Find et humoristisk udsagn og fremhæv med stor skrift. \n\n");
+        prompt.append("7. Nederst kort sammenfatning for hver af de tre kategorier \n\n");
+        prompt.append(" Positioner alle elementer så de ikke overlapper\n\n");
+        prompt.append("  VIGTIG: Generer en KOMPLET, STANDALONE HTML fil med:\n");
+        prompt.append("-  All CSS inline i <style> tags\n");
+        prompt.append("-  urban aesthetics look/hip hop \n");
 
-        prompt.append("VIGTIG: Generer en KOMPLET, STANDALONE HTML fil med:\n");
-        prompt.append("- All CSS inline i <style> tags\n");
-        prompt.append("- Moderne, professionelt design inspireret af den vedlagte stil\n");
-        prompt.append("- Responsive layout der virker på alle skærme\n");
-        prompt.append("- Farver: ");
+     /*   prompt.append("-  Farver: ");
 
         for (Category category : config.getCategories()) {
             prompt.append(category.getName()).append("=").append(category.getColor()).append(", ");
@@ -215,17 +185,27 @@ public class GenericEvaluationWorkflow {
         prompt.append("\n- Header color: ").append(config.getHeaderColor());
         prompt.append("\n- Summary color: ").append(config.getSummaryColor());
         prompt.append("\n\n");
-
+*/
         prompt.append("Design retningslinjer:\n");
-        prompt.append("- Hver kategori som en kolonne med colored border cards\n");
         prompt.append("- Hvide kort med subtile skygger\n");
         prompt.append("- Category headers med emoji og farvet top border\n");
-        prompt.append("- Gradient header sektion\n");
         prompt.append("- Summary box nederst med border i summary color\n");
-        prompt.append("- Humoristisk udsagn i gul/orange highlighted box\n");
-        prompt.append("- God spacing og læsbarhed\n");
-        prompt.append("- Print-venlig (A4 eller US Letter)\n\n");
-
+        prompt.append("- Humoristisk udsagn placeres i header ved siden af titel, i 'parental advisory explicit lyrics'-stil badge. Positioner skævt til højre for titel. Overskrift 'Student Wisdom' \n");
+        prompt.append("- God spacing og læsbarhed mellem alle elementer\n");
+        prompt.append("- Brug ikoner/illustrationer der matcher urban aesthetics/hip hop temaet\n");
+        prompt.append("- Print-venlig (A4)\n\n");
+        prompt.append(" DESIGN STYLE (match this exactly):\n");
+        prompt.append("- Infographic poster layout \n");
+        prompt.append("- 3 cards with category summaries on white background, colored header bar, icons/illustrations\n");
+        prompt.append("- Subtle shadows on cards\n");
+        prompt.append("- No gradients\n");
+        prompt.append("- Icons (ingen microfoner) and simple graphics in each section\n");
+        prompt.append("- Color-coded sections with consistent palette. black, gray, yellow, red, green\n ");
+        prompt.append("- Use comic book style font for ALL the statements\n ");
+        prompt.append("- Place statements near wordcloud in speechbubles. Use comic book style font\n ");
+        prompt.append("- cool colors\n");
+        prompt.append("- Large readable headers, body text in paragraphs\n");
+        prompt.append("- Bottom section spans full width\n\n");
         prompt.append("Returner KUN den komplette HTML - ingen forklaring, ingen markdown markers.\n");
         prompt.append("Start direkte med <!DOCTYPE html>");
 
@@ -292,29 +272,5 @@ public class GenericEvaluationWorkflow {
         return list;
     }
     
-    /**
-     * Main method for testing
-     */
-    public static void main(String[] args) {
-        String padletApiKey = System.getenv("PADLET_API_KEY");
-        String miroToken = System.getenv("MIRO_ACCESS_TOKEN");
-        String padletId = "wmzx0ad7z03mqxia";//wmzx0ad7z03mqxia
 
-        String evaluationType = "dare-share-care"; // or "delphi" or "retrospective"
-        
-        GenericEvaluationWorkflow workflow = new GenericEvaluationWorkflow(
-            padletApiKey, 
-            miroToken
-        );
-        
-        try {
-            String boardUrl = workflow.executeWorkflow(padletId, evaluationType);
-            System.out.println("\n✨ Workflow completed successfully!");
-            System.out.println("📊 Board URL: " + boardUrl);
-            
-        } catch (Exception e) {
-            System.err.println("❌ Workflow failed: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
 }

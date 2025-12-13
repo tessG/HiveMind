@@ -4,6 +4,7 @@ import java.util.List;
 
 /**
  * Factory for creating predefined evaluation configurations
+ * UPDATED to support proper Delphi Keep/Stop/Start format
  */
 public class EvaluationConfigFactory {
     
@@ -23,7 +24,29 @@ public class EvaluationConfigFactory {
         );
     }
     
+    /**
+     * UPDATED: Proper Keep/Stop/Start Delphi configuration
+     */
     public static EvaluationConfig getDelphi() {
+        List<Category> categories = Arrays.asList(
+            new Category("Keep Doing", "✅", "#48bb78"),      // Green - continue
+            new Category("Stop Doing", "🛑", "#f56565"),      // Red - discontinue
+            new Category("Start Doing", "⭐", "#4299e1")      // Blue - new actions
+        );
+        
+        return new EvaluationConfig(
+            "delphi",
+            "Student Evaluering - Keep, Stop, Start",
+            categories,
+            "#805ad5",  // Purple header
+            "#6b46c1"   // Darker purple summary
+        );
+    }
+    
+    /**
+     * Alternative 4-category Delphi if needed
+     */
+    public static EvaluationConfig getDelphiFourCategory() {
         List<Category> categories = Arrays.asList(
             new Category("Continue Doing", "✅", "#48bb78"),  // Green
             new Category("Do More", "🔼", "#4299e1"),         // Blue
@@ -32,11 +55,11 @@ public class EvaluationConfigFactory {
         );
         
         return new EvaluationConfig(
-            "delphi",
+            "delphi-4cat",
             "Evaluering og forbedringspunkter",
             categories,
-            "#805ad5",  // Purple header
-            "#6b46c1"   // Darker purple summary
+            "#805ad5",  
+            "#6b46c1"   
         );
     }
     
@@ -62,7 +85,11 @@ public class EvaluationConfigFactory {
             case "dsc":
                 return getDareShareCare();
             case "delphi":
+            case "keep-stop-start":
                 return getDelphi();
+            case "delphi-4":
+            case "delphi-four":
+                return getDelphiFourCategory();
             case "retrospective":
             case "retro":
                 return getRetro();
