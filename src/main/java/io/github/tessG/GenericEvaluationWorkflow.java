@@ -74,13 +74,27 @@ public class GenericEvaluationWorkflow {
                 .build();
 
         Message message = client.messages().create(params);
+        
+        // Extract text properly to avoid debug output
         String response = String.valueOf(message.content().get(0).text());
+
 
         // Extract HTML (remove any markdown markers if present)
         String html = response;
         html = html.replaceAll("```html\\s*", "");
         html = html.replaceAll("```\\s*", "");
         html = html.trim();
+
+
+
+
+// Cut off everything after </html> tag
+        int htmlEnd = html.indexOf("</html>");
+        if (htmlEnd != -1) {
+            html = html.substring(0, htmlEnd + 7);  // +7 to include "</html>"
+        }
+
+
 
         // Ensure it starts with DOCTYPE
         if (!html.startsWith("<!DOCTYPE")) {
@@ -131,21 +145,7 @@ public class GenericEvaluationWorkflow {
         return statements;
     }
     
-    private EvaluationInsights analyzeWithClaude(List<String> statements, 
-                                                 EvaluationConfig config) throws Exception {
-        AnthropicClient client = AnthropicOkHttpClient.fromEnv();
-        
-        MessageCreateParams params = MessageCreateParams.builder()
-            .model("claude-sonnet-4-5-20250929")
-            .maxTokens(4000)
-            .addUserMessage(buildAnalysisPrompt(statements, config))
-            .build();
-        
-        Message message = client.messages().create(params);
-        String analysisText = String.valueOf(message.content().get(0).text());
-        
-        return parseClaudeAnalysis(analysisText, config);
-    }
+
 
     private String buildAnalysisPrompt(List<String> statements, EvaluationConfig config) {
         StringBuilder prompt = new StringBuilder();
@@ -161,53 +161,121 @@ public class GenericEvaluationWorkflow {
             prompt.append((i + 1)).append(". ").append(statements.get(i)).append("\n");
         }
 
-        prompt.append("\nLav en struktureret analyse og GENERER EN KOMPLET HTML POSTER.\n\n");
-        prompt.append("Inkluder:\n");
-        prompt.append("1. En titel 'Student Vibes' og en subtitle sætning som anvender 3 vigtige nøgleord\n");
-        prompt.append("2. En wordcloud (MINIMUM 20 ORD) på baggrund af alle udsagnene. Hvid baggrund, Gul, Rød eller Grøn font med sort outline/slagsskygge\n");
-        prompt.append("3. rundt om wordclouden placeres ALLE udsagn i talebobler, træk pil hen til det ord i wordclouden som udsagnet relaterer til.\n ");
-        prompt.append("VIGTIGT: Undgå at udsagn og ord overlapper\n");
-        prompt.append("4. En sammenfatning\n");
-        prompt.append("5. En nøgleindsigt\n");
-        prompt.append("6. Find et humoristisk udsagn og fremhæv med stor skrift. \n\n");
-        prompt.append("7. Nederst kort sammenfatning for hver af de tre kategorier \n\n");
-        prompt.append(" Positioner alle elementer så de ikke overlapper\n\n");
-        prompt.append("  VIGTIG: Generer en KOMPLET, STANDALONE HTML fil med:\n");
-        prompt.append("-  All CSS inline i <style> tags\n");
-        prompt.append("-  urban aesthetics look/hip hop \n");
-
-     /*   prompt.append("-  Farver: ");
-
-        for (Category category : config.getCategories()) {
-            prompt.append(category.getName()).append("=").append(category.getColor()).append(", ");
-        }
-
-        prompt.append("\n- Header color: ").append(config.getHeaderColor());
-        prompt.append("\n- Summary color: ").append(config.getSummaryColor());
-        prompt.append("\n\n");
-*/
-        prompt.append("Design retningslinjer:\n");
-        prompt.append("- Hvide kort med subtile skygger\n");
-        prompt.append("- Category headers med emoji og farvet top border\n");
-        prompt.append("- Summary box nederst med border i summary color\n");
-        prompt.append("- Humoristisk udsagn placeres i header ved siden af titel, i 'parental advisory explicit lyrics'-stil badge. Positioner skævt til højre for titel. Overskrift 'Student Wisdom' \n");
-        prompt.append("- God spacing og læsbarhed mellem alle elementer\n");
-        prompt.append("- Brug ikoner/illustrationer der matcher urban aesthetics/hip hop temaet\n");
-        prompt.append("- Print-venlig (A4)\n\n");
-        prompt.append(" DESIGN STYLE (match this exactly):\n");
-        prompt.append("- Infographic poster layout \n");
-        prompt.append("- 3 cards with category summaries on white background, colored header bar, icons/illustrations\n");
-        prompt.append("- Subtle shadows on cards\n");
-        prompt.append("- No gradients\n");
-        prompt.append("- Icons (ingen microfoner) and simple graphics in each section\n");
-        prompt.append("- Color-coded sections with consistent palette. black, gray, yellow, red, green\n ");
-        prompt.append("- Use comic book style font for ALL the statements\n ");
-        prompt.append("- Place statements near wordcloud in speechbubles. Use comic book style font\n ");
-        prompt.append("- cool colors\n");
-        prompt.append("- Large readable headers, body text in paragraphs\n");
-        prompt.append("- Bottom section spans full width\n\n");
-        prompt.append("Returner KUN den komplette HTML - ingen forklaring, ingen markdown markers.\n");
-        prompt.append("Start direkte med <!DOCTYPE html>");
+        prompt.append("\n=== GENERER EN KOMPLET HTML POSTER ===\n\n");
+        
+        prompt.append("POSTER FORMAT:\n");
+        prompt.append("- Width: EXACTLY 900px (not max-width!)\n");
+        prompt.append("- Height: EXACTLY 1400px\n");
+        prompt.append("- White background\n");
+        prompt.append("- NO EXTRA WHITESPACE - fill the space!\n");
+        prompt.append("- Margins: 30px on all sides\n\n");
+        
+        prompt.append("LAYOUT STRUKTUR - FØLG DISSE HØJDER PRÆCIST:\n\n");
+        
+        prompt.append("1. HEADER (100px høj):\n");
+        prompt.append("   - Titel: 'Student Vibes' (Bangers, 42px, centered)\n");
+        prompt.append("   - Subtitle: Nøgleord (14px, centered)\n");
+        prompt.append("   - Quote badge: Top-right, absolut position\n");
+        prompt.append("     * Kun citatet - INGEN titel\n");
+        prompt.append("     * Sort baggrund, hvid Bangers tekst (16px)\n");
+        prompt.append("     * 180px bred, padding 12px, roteret 4°\n\n");
+        
+        prompt.append("2. WORDCLOUD + BUBBLES (650px høj - IKKE MER!):\n");
+        prompt.append("   \n");
+        prompt.append("   WORDCLOUD (center, 350×350px):\n");
+        prompt.append("   - Placeret i midten horisontalt og vertikalt\n");
+        prompt.append("   - Top 5 ord: 45-60px BOLD i centrum\n");
+        prompt.append("   - Medium (8 ord): 30-40px omkring centrum\n");
+        prompt.append("   - Rest (12 ord): 18-28px yderkant\n");
+        prompt.append("   - Total: ~25 ord\n");
+        prompt.append("   - Farver: gul/rød/grøn med sort shadow\n");
+        prompt.append("   - Tæt pakket, roterede ord\n");
+        prompt.append("   \n");
+        prompt.append("   SPEECH BUBBLES (8-12 stykker TOTAL):\n");
+        prompt.append("   VIGTIGT: Lav FÆRRE, BEDRE statements!\n");
+        prompt.append("   - Cluster lignende udsagn sammen\n");
+        prompt.append("   - Hver bubble repræsenterer 2-4 originale udsagn\n");
+        prompt.append("   - Skriv sammenfattende statements der dækker temaet\n");
+        prompt.append("   - Eksempel: I stedet for 3 bubbles om \"mere tid\", lav ÉN:\n");
+        prompt.append("     \"Studerende ønsker mere tid til fordybelse og færre deadlines\"\n");
+        prompt.append("   \n");
+        prompt.append("   Bubble placering (3×3 grid omkring wordcloud):\n");
+        prompt.append("   - Top: 2-3 bubbles\n");
+        prompt.append("   - Sides: 2-3 bubbles hver side\n");
+        prompt.append("   - Bottom: 2-3 bubbles\n");
+        prompt.append("   - Hver bubble:\n");
+        prompt.append("     * Hvid baggrund, sort 2px border, border-radius 8px\n");
+        prompt.append("     * Permanent Marker, 12px\n");
+        prompt.append("     * 140-180px bred (variér!)\n");
+        prompt.append("     * Padding: 12px\n");
+        prompt.append("     * Rotation: -6° til +6°\n");
+        prompt.append("     * Subtle box-shadow\n");
+        prompt.append("   - Placer semantisk nær relateret ord\n");
+        prompt.append("   - FYLD RUMMET - brug hele 650px højden!\n\n");
+        
+        prompt.append("3. SUMMARY + CATEGORIES (450px høj):\n");
+        prompt.append("   \n");
+        prompt.append("   A) SAMMENFATNING (200px):\n");
+        prompt.append("   - Full-width box\n");
+        prompt.append("   - Titel: \"📊 Sammenfatning\" (Permanent Marker, 22px)\n");
+        prompt.append("   - 4-5 sætninger om overordnede tendenser\n");
+        prompt.append("   - Grå border-left (4px, #6b7280)\n");
+        prompt.append("   - Background: #f9fafb\n");
+        prompt.append("   - Padding: 20px\n");
+        prompt.append("   - Line-height: 1.6\n");
+        prompt.append("   \n");
+        prompt.append("   B) 3 KATEGORI KOLONNER (250px):\n");
+        prompt.append("   - Side-by-side, equal width\n");
+        prompt.append("   - Hver kolonne:\n");
+        prompt.append("     * Emoji + kategori navn (18px bold)\n");
+        prompt.append("     * 3-4 sætninger beskrivelse\n");
+        prompt.append("     * Farvet top-border (4px)\n");
+        prompt.append("     * Background hvid\n");
+        prompt.append("     * Padding: 15px\n\n");
+        
+        prompt.append("4. KEY INSIGHT (200px høj):\n");
+        prompt.append("   - Full-width\n");
+        prompt.append("   - Gul baggrund (#fef3c7)\n");
+        prompt.append("   - Orange border-left (4px, #f59e0b)\n");
+        prompt.append("   - Titel: \"💡 Nøgleindsigt\" (Permanent Marker, 20px)\n");
+        prompt.append("   - 3-4 sætninger om vigtigste observation\n");
+        prompt.append("   - Padding: 20px\n");
+        prompt.append("   - Line-height: 1.6\n\n");
+        
+        prompt.append("5. FOOTER (30px høj):\n");
+        prompt.append("   - Full-width\n");
+        prompt.append("   - Text: 'This poster was automatically generated using AI analysis of student feedback • [dagens dato]'\n");
+        prompt.append("   - Font-size: 10px\n");
+        prompt.append("   - Color: #999\n");
+        prompt.append("   - Text-align: center\n");
+        prompt.append("   - Border-top: 1px solid #eee\n");
+        prompt.append("   - Padding: 15px 0\n\n");
+        
+        prompt.append("TECHNICAL CSS:\n");
+        prompt.append("- .poster { width: 900px; height: 1400px; margin: 0 auto; padding: 30px; background: white; }\n");
+        prompt.append("- Google Fonts: 'Bangers', 'Permanent Marker'\n");
+        prompt.append("- NO max-width, use exact width\n");
+        prompt.append("- Use CSS Grid for layout precision\n");
+        prompt.append("- Box-shadows: 0 2px 4px rgba(0,0,0,0.1)\n\n");
+        
+        prompt.append("KRITISK - FJERN DEBUG TEXT:\n");
+        prompt.append("- INKLUDER IKKE tekst som 'type=text, additionalProperties={}'\n");
+        prompt.append("- INKLUDER IKKE API debug information\n");
+        prompt.append("- KUN brugervenligt indhold i HTML\n\n");
+        
+        prompt.append("SPACE UTILIZATION:\n");
+        prompt.append("- FYLD hele poster - brug alle 1400px height\n");
+        prompt.append("- INGEN store whitespace områder\n");
+        prompt.append("- Bubbles skal sprede sig i hele wordcloud-sektionen\n");
+        prompt.append("- Summary og insight boxes skal have substans (ikke knappe)\n\n");
+        
+        prompt.append("OUTPUT:\n");
+        prompt.append("Returner KUN komplet HTML.\n");
+        prompt.append("- Start med <!DOCTYPE html>\n");
+        prompt.append("- INGEN markdown\n");
+        prompt.append("- INGEN forklaring\n");
+        prompt.append("- INGEN debug text\n");
+        prompt.append("- Præcis 900×1400px poster\n");
 
         return prompt.toString();
     }
