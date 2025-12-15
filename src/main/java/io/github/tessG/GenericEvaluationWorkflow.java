@@ -168,10 +168,9 @@ public class GenericEvaluationWorkflow {
         prompt.append("- Height: EXACTLY 1400px\n");
         prompt.append("- White background\n");
         prompt.append("- NO EXTRA WHITESPACE - fill the space!\n");
-        prompt.append("- Margins: 30px on all sides\n\n");
+        prompt.append("- Margins: 20px on all sides\n\n");
         
         prompt.append("LAYOUT STRUKTUR - FØLG DISSE HØJDER PRÆCIST:\n\n");
-        
         prompt.append("1. HEADER (100px høj):\n");
         prompt.append("   - Titel: 'Student Vibes' (Bangers, 42px, centered)\n");
         prompt.append("   - Subtitle: Nøgleord (14px, centered)\n");
@@ -182,16 +181,16 @@ public class GenericEvaluationWorkflow {
         
         prompt.append("2. WORDCLOUD + BUBBLES (650px høj - IKKE MER!):\n");
         prompt.append("   \n");
-        prompt.append("   WORDCLOUD (center, 350×350px):\n");
+        prompt.append("   WORDCLOUD (center, 300×300px):\n");
         prompt.append("   - Placeret i midten horisontalt og vertikalt\n");
         prompt.append("   - Top 5 ord: 45-60px BOLD i centrum\n");
         prompt.append("   - Medium (8 ord): 30-40px omkring centrum\n");
-        prompt.append("   - Rest (12 ord): 18-28px yderkant\n");
+        prompt.append("   - Rest (12 ord): 18-20px yderkant\n");
         prompt.append("   - Total: ~25 ord\n");
         prompt.append("   - Farver: gul/rød/grøn med sort shadow\n");
         prompt.append("   - Tæt pakket, roterede ord\n");
         prompt.append("   \n");
-        prompt.append("   SPEECH BUBBLES (8-12 stykker TOTAL):\n");
+        prompt.append("   SPEECH BUBBLES (12-14 stykker TOTAL):\n");
         prompt.append("   VIGTIGT: Lav FÆRRE, BEDRE statements!\n");
         prompt.append("   - Cluster lignende udsagn sammen\n");
         prompt.append("   - Hver bubble repræsenterer 2-4 originale udsagn\n");
@@ -200,9 +199,9 @@ public class GenericEvaluationWorkflow {
         prompt.append("     \"Studerende ønsker mere tid til fordybelse og færre deadlines\"\n");
         prompt.append("   \n");
         prompt.append("   Bubble placering (3×3 grid omkring wordcloud):\n");
-        prompt.append("   - Top: 2-3 bubbles\n");
-        prompt.append("   - Sides: 2-3 bubbles hver side\n");
-        prompt.append("   - Bottom: 2-3 bubbles\n");
+        prompt.append("   - Top: 4-5 bubbles\n");
+        prompt.append("   - Sides: 8-10 bubbles hver side\n");
+        prompt.append("   - Bottom: 0 bubbles\n");
         prompt.append("   - Hver bubble:\n");
         prompt.append("     * Hvid baggrund, sort 2px border, border-radius 8px\n");
         prompt.append("     * Permanent Marker, 12px\n");
@@ -218,7 +217,7 @@ public class GenericEvaluationWorkflow {
         prompt.append("   A) SAMMENFATNING (200px):\n");
         prompt.append("   - Full-width box\n");
         prompt.append("   - Titel: \"📊 Sammenfatning\" (Permanent Marker, 22px)\n");
-        prompt.append("   - 4-5 sætninger om overordnede tendenser\n");
+        prompt.append("   - 2-3 sætninger om overordnede tendenser\n");
         prompt.append("   - Grå border-left (4px, #6b7280)\n");
         prompt.append("   - Background: #f9fafb\n");
         prompt.append("   - Padding: 20px\n");
@@ -226,33 +225,36 @@ public class GenericEvaluationWorkflow {
         prompt.append("   \n");
         prompt.append("   B) 3 KATEGORI KOLONNER (250px):\n");
         prompt.append("   - Side-by-side, equal width\n");
+        prompt.append("     * VIGTIGT: max-height: 160px\n\n");
         prompt.append("   - Hver kolonne:\n");
         prompt.append("     * Emoji + kategori navn (18px bold)\n");
-        prompt.append("     * 3-4 sætninger beskrivelse\n");
+        prompt.append("     * 2-3 sætninger beskrivelse\n");
         prompt.append("     * Farvet top-border (4px)\n");
         prompt.append("     * Background hvid\n");
         prompt.append("     * Padding: 15px\n\n");
-        
-        prompt.append("4. KEY INSIGHT (200px høj):\n");
+
+
+
+        prompt.append("4. KEY INSIGHT (100px høj):\n");
         prompt.append("   - Full-width\n");
         prompt.append("   - Gul baggrund (#fef3c7)\n");
         prompt.append("   - Orange border-left (4px, #f59e0b)\n");
         prompt.append("   - Titel: \"💡 Nøgleindsigt\" (Permanent Marker, 20px)\n");
-        prompt.append("   - 3-4 sætninger om vigtigste observation\n");
+        prompt.append("   - 2-3 sætninger om vigtigste observation\n");
         prompt.append("   - Padding: 20px\n");
         prompt.append("   - Line-height: 1.6\n\n");
         
-        prompt.append("5. FOOTER (30px høj):\n");
+        prompt.append("5. FOOTER (20px høj):\n");
         prompt.append("   - Full-width\n");
         prompt.append("   - Text: 'This poster was automatically generated using AI analysis of student feedback • [dagens dato]'\n");
         prompt.append("   - Font-size: 10px\n");
         prompt.append("   - Color: #999\n");
         prompt.append("   - Text-align: center\n");
         prompt.append("   - Border-top: 1px solid #eee\n");
-        prompt.append("   - Padding: 15px 0\n\n");
+        prompt.append("   - Padding: 5px 0\n\n");
         
         prompt.append("TECHNICAL CSS:\n");
-        prompt.append("- .poster { width: 900px; height: 1400px; margin: 0 auto; padding: 30px; background: white; }\n");
+        prompt.append("- .poster { width: 900px; height: 1400px; margin: 0 auto; padding: 20px; background: white; }\n");
         prompt.append("- Google Fonts: 'Bangers', 'Permanent Marker'\n");
         prompt.append("- NO max-width, use exact width\n");
         prompt.append("- Use CSS Grid for layout precision\n");
@@ -266,9 +268,7 @@ public class GenericEvaluationWorkflow {
         prompt.append("SPACE UTILIZATION:\n");
         prompt.append("- FYLD hele poster - brug alle 1400px height\n");
         prompt.append("- INGEN store whitespace områder\n");
-        prompt.append("- Bubbles skal sprede sig i hele wordcloud-sektionen\n");
-        prompt.append("- Summary og insight boxes skal have substans (ikke knappe)\n\n");
-        
+
         prompt.append("OUTPUT:\n");
         prompt.append("Returner KUN komplet HTML.\n");
         prompt.append("- Start med <!DOCTYPE html>\n");
@@ -280,65 +280,9 @@ public class GenericEvaluationWorkflow {
         return prompt.toString();
     }
     
-    private EvaluationInsights parseClaudeAnalysis(String analysisText, 
-                                                   EvaluationConfig config) {
-        System.out.println("RAW Claude response: " + analysisText);
-        
-        // Extract JSON from markdown
-        int jsonMarkerStart = analysisText.indexOf("```json");
-        if (jsonMarkerStart != -1) {
-            analysisText = analysisText.substring(jsonMarkerStart);
-        }
-        
-        int jsonMarkerEnd = analysisText.lastIndexOf("```");
-        if (jsonMarkerEnd != -1 && jsonMarkerEnd > jsonMarkerStart) {
-            analysisText = analysisText.substring(0, jsonMarkerEnd);
-        }
-        
-        analysisText = analysisText.replaceAll("```json\\s*", "");
-        analysisText = analysisText.replaceAll("```", "");
-        analysisText = analysisText.replaceAll("\\{citations=.*?type=text.*?\\}", "");
-        analysisText = analysisText.replaceAll(", type=text, additionalProperties=\\{\\}\\}", "");
-        
-        String jsonText = analysisText.trim();
-        System.out.println("Cleaned JSON: " + jsonText);
-        
-        try {
-            JsonObject analysis = gson.fromJson(jsonText, JsonObject.class);
-            
-            String headline = analysis.get("headline").getAsString();
-            String summary = analysis.get("summary").getAsString();
-            String keyInsight = analysis.get("keyInsight").getAsString();
-            String humorousStatement = analysis.has("humorousStatement")
-                    ? analysis.get("humorousStatement").getAsString()
-                    : null;
-            // Extract items for each category dynamically
-            Map<String, List<String>> categorizedItems = new HashMap<>();
-            for (Category category : config.getCategories()) {
-                JsonArray items = analysis.getAsJsonArray(category.getName());
-                if (items != null) {
-                    categorizedItems.put(category.getName(), jsonArrayToList(items));
-                } else {
-                    categorizedItems.put(category.getName(), new ArrayList<>());
-                }
-            }
-            
-            return new EvaluationInsights(headline, categorizedItems, summary, keyInsight,humorousStatement);
-            
-        } catch (Exception e) {
-            System.err.println("Parse error. Cleaned text was:");
-            System.err.println(jsonText);
-            throw new RuntimeException("Failed to parse: " + e.getMessage(), e);
-        }
-    }
+
     
-    private List<String> jsonArrayToList(JsonArray jsonArray) {
-        List<String> list = new ArrayList<>();
-        for (int i = 0; i < jsonArray.size(); i++) {
-            list.add(jsonArray.get(i).getAsString());
-        }
-        return list;
-    }
+
     
 
 }

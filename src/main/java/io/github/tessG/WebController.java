@@ -20,11 +20,11 @@ import java.nio.file.Paths;
 @RestController
 @SpringBootApplication
 public class WebController {
-    
+
     public static void main(String[] args) {
         SpringApplication.run(WebController.class, args);
     }
-    
+
     /**
      * Homepage with two input options
      */
@@ -526,8 +526,8 @@ public class WebController {
             // Use existing DelphiDirectWorkflow
             DelphiDirectWorkflow workflow = new DelphiDirectWorkflow();
             String posterPath = workflow.generatePosterFromCsv(
-                tempCsv.toString(),
-                evaluationType
+                    tempCsv.toString(),
+                    evaluationType
             );
 
             System.out.println("✅ Poster generated: " + posterPath);
@@ -560,9 +560,9 @@ public class WebController {
             Resource resource = new FileSystemResource(file);
 
             return ResponseEntity.ok()
-                .header("Content-Disposition", "attachment; filename=\"" + file.getFileName() + "\"")
-                .header("Content-Type", "text/html; charset=UTF-8")
-                .body(resource);
+                    .header("Content-Disposition", "attachment; filename=\"" + file.getFileName() + "\"")
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(resource);
 
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
@@ -656,8 +656,6 @@ public class WebController {
                 <div class="header">
                     <h2>✅ Poster Generated Successfully!</h2>
                     <div class="buttons">
-                        <a href="/download-pdf/%s" class="btn btn-download">📄 Download PDF</a>
-         
                         <a href="/" class="btn btn-home">🏠 Create Another</a>
                     </div>
                 </div>
@@ -670,56 +668,10 @@ public class WebController {
             </body>
             </html>
             """.formatted(
-                filename,
                 escapeHtmlForAttribute(posterHtml)
-            );
+        );
     }
-    @GetMapping("/download-pdf/{filename}")
-    public ResponseEntity<Resource> downloadPosterAsPdf(@PathVariable String filename) {
-        try {
-            Path htmlFile = Paths.get(filename);
 
-            if (!Files.exists(htmlFile)) {
-                throw new IOException("File not found: " + filename);
-            }
-
-            // Create PDF filename
-            String pdfFilename = filename.replace(".html", ".pdf");
-            Path pdfFile = Paths.get(pdfFilename);
-
-            // Convert HTML to PDF using wkhtmltopdf
-            ProcessBuilder pb = new ProcessBuilder(
-                    "wkhtmltopdf",
-                    "--enable-local-file-access",
-                    "--page-size", "A4",
-                    "--margin-top", "10mm",
-                    "--margin-bottom", "10mm",
-                    "--margin-left", "10mm",
-                    "--margin-right", "10mm",
-                    htmlFile.toAbsolutePath().toString(),
-                    pdfFile.toAbsolutePath().toString()
-            );
-
-            Process process = pb.start();
-            int exitCode = process.waitFor();
-
-            if (exitCode != 0) {
-                throw new RuntimeException("PDF conversion failed with exit code: " + exitCode);
-            }
-
-            Resource resource = new FileSystemResource(pdfFile);
-
-            return ResponseEntity.ok()
-                    .header("Content-Disposition", "attachment; filename=\"" + pdfFile.getFileName() + "\"")
-                    .header("Content-Type", "application/pdf")
-                    .body(resource);
-
-        } catch (Exception e) {
-            System.err.println("PDF generation error: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
-    }
     /**
      * Generate error page
      */
@@ -774,8 +726,8 @@ public class WebController {
      */
     private String escapeHtmlForAttribute(String html) {
         return html.replace("&", "&amp;")
-                   .replace("\"", "&quot;")
-                   .replace("'", "&#39;");
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     /**

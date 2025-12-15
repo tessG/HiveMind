@@ -307,35 +307,93 @@ public class DelphiDirectWorkflow {
 "    <title>" + config.getTitle() + "</title>\n" +
 "    <link href=\"https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&display=swap\" rel=\"stylesheet\">\n" +
 "    <style>\n" +
-"        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; }\n" +
-"        .poster { width: 900px; background: white; padding: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }\n" +
-"        h1 { font-family: 'Bangers', cursive; font-size: 42px; text-align: center; margin: 0 0 10px 0; color: #333; line-height: 1.2; }\n" +
-"        .subtitle { text-align: center; font-size: 14px; color: #666; margin-bottom: 20px; }\n" +
-"        .student-wisdom { position: absolute; top: 40px; right: 40px; width: 220px; background: #000; color: #fff; padding: 15px; border: 3px solid #fff; box-shadow: 0 0 0 3px #000; transform: rotate(3deg); }\n" +
-"        .student-wisdom .label { font-family: 'Permanent Marker', cursive; font-size: 11px; text-align: center; border-bottom: 2px solid #fff; padding-bottom: 5px; margin-bottom: 8px; letter-spacing: 1px; }\n" +
-"        .student-wisdom .quote { font-family: 'Bangers', cursive; font-size: 18px; text-align: center; line-height: 1.3; }\n" +
-"        .graph-container { position: relative; margin: 30px 0; }\n" +
-"        svg { display: block; margin: 0 auto; }\n" +
-"        .edge { stroke: #999; stroke-width: 1; stroke-opacity: 0.25; fill: none; }\n" +
-"        .edge.strong { stroke-width: 2; stroke-opacity: 0.5; stroke: #555; }\n" +
-"        .node-box { cursor: pointer; transition: all 0.2s; stroke-width: 2; }\n" +
-"        .node-box.keep-doing { fill: #e6f7ed; stroke: #48bb78; }\n" +
-"        .node-box.stop-doing { fill: #fee; stroke: #f56565; }\n" +
-"        .node-box.start-doing { fill: #e6f2ff; stroke: #4299e1; }\n" +
-"        .node-box:hover { stroke-width: 3; filter: brightness(0.95); }\n" +
-"        .node-text { font-size: 8px; fill: #333; pointer-events: none; }\n" +
-"        .category-label { font-size: 20px; font-weight: bold; font-family: 'Permanent Marker', cursive; }\n" +
-"        .connections-info { text-align: center; font-size: 13px; color: #999; margin-top: 10px; font-style: italic; }\n" +
-"        .bottom-section { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }\n" +
-"        .summary-box { background: #f9f9f9; padding: 20px; border-left: 4px solid #48bb78; }\n" +
-"        .summary-box h3 { margin: 0 0 10px 0; font-family: 'Permanent Marker', cursive; color: #48bb78; font-size: 18px; }\n" +
-"        .summary-box p { margin: 0; line-height: 1.6; font-size: 14px; color: #333; }\n" +
-"        .insight-box { background: #fff3cd; padding: 20px; border-left: 4px solid #f59e0b; }\n" +
-"        .insight-box h3 { margin: 0 0 10px 0; font-family: 'Permanent Marker', cursive; color: #f59e0b; font-size: 18px; }\n" +
-"        .insight-box p { margin: 0; line-height: 1.6; font-size: 14px; color: #333; }\n" +
-"        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #999; padding: 15px; border-top: 1px solid #eee; }\n" +
-"        @media print { body { background: white; } .poster { box-shadow: none; } }\n" +
-"    </style>\n" +
+                "        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; }\n" +
+                "        .poster { width: 900px; background: white; padding: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }\n" +
+                "        h1 { font-family: 'Bangers', cursive; font-size: 42px; text-align: center; margin: 0 0 10px 0; color: #333; line-height: 1.2; }\n" +
+                "        .subtitle { text-align: center; font-size: 14px; color: #666; margin-bottom: 20px; }\n" +
+                "        .student-wisdom { position: absolute; top: 40px; right: 40px; width: 220px; background: #000; color: #fff; padding: 15px; border: 3px solid #fff; box-shadow: 0 0 0 3px #000; transform: rotate(3deg); }\n" +
+                "        .student-wisdom .label { font-family: 'Permanent Marker', cursive; font-size: 11px; text-align: center; border-bottom: 2px solid #fff; padding-bottom: 5px; margin-bottom: 8px; letter-spacing: 1px; }\n" +
+                "        .student-wisdom .quote { font-family: 'Bangers', cursive; font-size: 18px; text-align: center; line-height: 1.3; }\n" +
+                "        .graph-container { position: relative; margin: 30px 0; }\n" +
+                "        svg { display: block; margin: 0 auto; }\n" +
+                "        .edge { stroke: #999; stroke-width: 1; stroke-opacity: 0.25; fill: none; }\n" +
+                "        .edge.strong { stroke-width: 2; stroke-opacity: 0.5; stroke: #555; }\n" +
+                "        .node-box { cursor: pointer; transition: all 0.2s; stroke-width: 2; }\n" +
+                "        .node-box.keep-doing { fill: #e6f7ed; stroke: #48bb78; }\n" +
+                "        .node-box.stop-doing { fill: #fee; stroke: #f56565; }\n" +
+                "        .node-box.start-doing { fill: #e6f2ff; stroke: #4299e1; }\n" +
+                "        .node-box:hover { stroke-width: 3; filter: brightness(0.95); }\n" +
+                "        .node-text { font-size: 8px; fill: #333; pointer-events: none; }\n" +
+                "        .category-label { font-size: 20px; font-weight: bold; font-family: 'Permanent Marker', cursive; }\n" +
+                "        .connections-info { text-align: center; font-size: 13px; color: #999; margin-top: 10px; font-style: italic; }\n" +
+                "        .bottom-section { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }\n" +
+                "        .summary-box { background: #f9f9f9; padding: 20px; border-left: 4px solid #48bb78; display: none; }\n" +
+                "        .summary-box h3 { margin: 0 0 10px 0; font-family: 'Permanent Marker', cursive; color: #48bb78; font-size: 18px; }\n" +
+                "        .summary-box p { margin: 0; line-height: 1.6; font-size: 14px; color: #333; }\n" +
+                "        .insight-box { background: #fff3cd; padding: 20px; border-left: 4px solid #f59e0b; }\n" +
+                "        .insight-box h3 { margin: 0 0 10px 0; font-family: 'Permanent Marker', cursive; color: #f59e0b; font-size: 18px; }\n" +
+                "        .insight-box p { margin: 0; line-height: 1.6; font-size: 14px; color: #333; }\n" +
+                "        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #999; padding: 15px; border-top: 1px solid #eee; }\n" +
+                "        \n" +
+                "        @media print { \n" +
+                "            @page {\n" +
+                "                size: A4 portrait;\n" +
+                "                margin: 10mm;\n" +
+                "            }\n" +
+                "            body { \n" +
+                "                background: white; \n" +
+                "                padding: 0;\n" +
+                "                margin: 0;\n" +
+                "            }\n" +
+                "            header {\n" +
+                "                display: none !important;\n" +
+                "            }\n" +
+                "            .poster { \n" +
+                "                box-shadow: none;\n" +
+                "                page-break-inside: avoid;\n" +
+                "                padding: 20px;\n" +
+                "                width: 100%;\n" +
+                "            }\n" +
+                "            h1 { font-size: 36px; margin: 0 0 5px 0; }\n" +
+                "            .subtitle { margin-bottom: 10px; }\n" +
+                "            .graph-container { \n" +
+                "                margin: 10px 0;\n" +
+                "                max-height: 350px;\n" +
+                "            }\n" +
+                "            svg {\n" +
+                "                max-height: 330px;\n" +
+                "            }\n" +
+                "            .bottom-section { \n" +
+                "                margin-top: 20px;\n" +
+                "                gap: 15px;\n" +
+                "                grid-template-columns: 1fr;\n" +
+                "            }\n" +
+                "            .summary-box {\n" +
+                "                display: none !important;\n" +
+                "            }\n" +
+                "            .insight-box { \n" +
+                "                padding: 15px;\n" +
+                "            }\n" +
+                "            .insight-box h3 {\n" +
+                "                font-size: 16px;\n" +
+                "            }\n" +
+                "            .insight-box p {\n" +
+                "                font-size: 12px;\n" +
+                "                line-height: 1.4;\n" +
+                "            }\n" +
+                "            .footer {\n" +
+                "                margin-top: 15px;\n" +
+                "                padding: 10px;\n" +
+                "            }\n" +
+                "            .student-wisdom {\n" +
+                "                width: 180px;\n" +
+                "                padding: 12px;\n" +
+                "            }\n" +
+                "            .student-wisdom .quote {\n" +
+                "                font-size: 16px;\n" +
+                "            }\n" +
+                "        }\n" +
+                "    </style>" +
 "</head>\n" +
 "<body>\n" +
 "    <div class=\"poster\">\n" +
