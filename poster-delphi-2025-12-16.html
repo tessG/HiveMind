@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Student Evaluering - Keep, Stop, Start - Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f5f5f5; }
+    .poster-wrapper { transform: scale(0.41); transform-origin: top left; }
+    .poster { width: 2480px; height: 1754px; background: white; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        display: grid; grid-template-columns: 1140px 1240px; grid-template-rows: 200px 1280px 320px; gap: 20px; }
+    .header { grid-column: 1 / -1; grid-row: 1; display: grid; grid-template-columns: 1600px 820px; gap: 20px; align-items: center; }
+    .title-section h1 { font-family: 'Bangers', cursive; font-size: 64px; color: #333; line-height: 1.1; margin-bottom: 10px; }
+    .title-section .subtitle { font-size: 22px; color: #666; }
+    .controversial-statement { background: #000; color: #fff; padding: 25px; border: 4px solid #fff;
+        box-shadow: 0 0 0 4px #000, 0 4px 12px rgba(0,0,0,0.3); transform: rotate(-2deg); }
+    .controversial-statement .label { font-family: 'Permanent Marker', cursive; font-size: 14px; text-align: center;
+        border-bottom: 2px solid #fff; padding-bottom: 8px; margin-bottom: 12px; letter-spacing: 2px; }
+    .controversial-statement .quote { font-family: 'Bangers', cursive; font-size: 24px; text-align: center; line-height: 1.3; }
+    .similarity-graph { grid-column: 1; grid-row: 2; border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; background: #fff; }
+    .similarity-graph h2 { font-family: 'Permanent Marker', cursive; font-size: 28px; margin-bottom: 15px; color: #4299e1; }
+    .contradictory-graph { grid-column: 2; grid-row: 2; border: 2px solid #fed7d7; border-radius: 8px; padding: 20px;
+        background: #fff; display: flex; flex-direction: column; }
+    .contradictory-graph h2 { font-family: 'Permanent Marker', cursive; font-size: 28px; margin-bottom: 15px; color: #e53e3e; }
+    .summary { grid-column: 1; grid-row: 3; background: #f9fafb; border-left: 6px solid #6b7280; border-radius: 8px; padding: 25px;max-height: fit-content; }
+    .summary h3 { font-family: 'Permanent Marker', cursive; font-size: 26px; color: #4a5568; margin-bottom: 12px; }
+    .summary p { font-size: 16px; line-height: 1.6; color: #333; }
+    .key-insight { grid-column: 2; grid-row: 3; background: #fff3cd; border-left: 6px solid #f59e0b; border-radius: 8px; padding: 25px;max-height: fit-content;  }
+    .key-insight h3 { font-family: 'Permanent Marker', cursive; font-size: 26px; color: #f59e0b; margin-bottom: 12px; }
+    .key-insight p { font-size: 18px; line-height: 1.6; color: #333; }
+    svg { display: block; }
+    .edge { stroke: #cbd5e0; stroke-width: 1.5; stroke-opacity: 0.3; fill: none; }
+    .edge.strong { stroke-width: 2.5; stroke-opacity: 0.5; stroke: #718096; }
+    .contradiction-edge { stroke: #e53e3e; stroke-width: 3; stroke-dasharray: 8,6; fill: none; opacity: 0.7; }
+    .contradiction-edge.high-tension { stroke-width: 4; opacity: 0.9; stroke: #c53030; }
+    .node-box { cursor: pointer; transition: all 0.2s; stroke-width: 2.5; }
+    .node-box.keep-doing { fill: #e6f7ed; stroke: #48bb78; }
+    .node-box.stop-doing { fill: #fee; stroke: #f56565; }
+    .node-box.start-doing { fill: #e6f2ff; stroke: #4299e1; }
+    .node-box:hover { stroke-width: 4; filter: brightness(0.95); }
+    .node-text { font-size: 16px; fill: #333; pointer-events: none; font-weight: 500; }
+    .contradiction-node-text { font-size: 16px; fill: #1a202c; pointer-events: none; font-weight: 600; }
+    .category-label { font-size: 24px; font-weight: bold; font-family: 'Permanent Marker', cursive; }
+    .tension-label { font-size: 14px; fill: #e53e3e; font-weight: bold; font-family: 'Permanent Marker', cursive; }
+    .connections-info { text-align: center; font-size: 14px; color: #718096; margin-top: 10px; font-style: italic; }
+    @media print { body { background: white; margin: 0; padding: 0; } .poster-wrapper { transform: scale(1); } .poster { box-shadow: none; } }
+</style>
+</head>
+<body>
+<div class="poster-wrapper">
+<div class="poster">
+<div class="header">
+<div class="title-section">
+<h1>Studerende ønsker mere struktur, bedre kommunikation og balance mellem frihed og vejledning</h1>
+</div>
+<div class="controversial-statement">
+<div class="label">STUDENT WISDOM</div>
+<div class="quote">"Tag mindre hensyn til folk der konsekvent ikke dukker op"</div>
+</div>
+</div>
+<div class="similarity-graph">
+<h2>🔗 Forbindelser mellem udsagn</h2>
+<svg id="similarityGraph" width="1200" height="800"></svg>
+<div class="connections-info">30 forbindelser mellem 40 udsagn</div>
+</div>
+<div class="contradictory-graph">
+<h2>⚡ Modsætninger & Spændinger</h2>
+<svg id="contradictionGraph" width="1200" height="1544"></svg>
+</div>
+<div class="summary">
+<h3>📊 Sammenfatning</h3>
+<p>Feedbacken viser et klart ønske om mere struktureret undervisning med klare tidsplaner og pauser, samtidig med at den nuværende balance mellem review, nye emner og frihed værdsættes. Kommunikation skal forbedres, særligt omkring email-svar og feedback på opgaver. Der er appreciation for det sociale miljø og humoren, men frustrationer over tekniske detaljer som lukkede afleveringslinks og uklare torsdagsopgaver.</p>
+</div>
+<div class="key-insight">
+<h3>💡 Nøgleindsigt</h3>
+<p>Der er en interessant spænding mellem ønsket om mere minutiøs planlægning og strukturering på den ene side, og anerkendelsen af behovet for fleksibilitet og tilpasning til situationen på den anden side - begge perspektiver kommer fra samme gruppe studerende.</p>
+</div>
+</div>
+</div>
+<script>
+const similarityData = {"nodes":[{"id":0,"category":"Stop Doing","text":"Holde mange pauser","width":80,"height":45,"x":330,"y":530},{"id":1,"category":"Stop Doing","text":"Blande sorig i samme opgaver","width":90,"height":50,"x":440,"y":530},{"id":2,"category":"Stop Doing","text":"Online undervisning om tirsdagen","width":90,"height":50,"x":550,"y":530},{"id":3,"category":"Stop Doing","text":"Tag mindre hensyn til folk der konsekvent ikke dukker op","width":110,"height":65,"x":330,"y":605},{"id":4,"category":"Stop Doing","text":"Wokeness","width":80,"height":45,"x":440,"y":605},{"id":5,"category":"Stop Doing","text":"Ændre grupper flere gange","width":90,"height":50,"x":550,"y":605},{"id":6,"category":"Start Doing","text":"Klar planer for tider og pauser","width":90,"height":50,"x":580,"y":80},{"id":7,"category":"Start Doing","text":"Mere forklaring for hver linje kode","width":90,"height":50,"x":690,"y":80},{"id":8,"category":"Start Doing","text":"Differentieret undervisning på rep dage - opgaver til de der ikke har brug for gennemgang","width":110,"height":65,"x":800,"y":80},{"id":9,"category":"Start Doing","text":"Svare emails - nemmere kommunikation","width":90,"height":50,"x":580,"y":155},{"id":10,"category":"Start Doing","text":"Sætte jer mere ind i tor og man opgaver","width":90,"height":50,"x":690,"y":155},{"id":11,"category":"Start Doing","text":"Vi koder ikke nok sammen","width":80,"height":45,"x":800,"y":155},{"id":12,"category":"Start Doing","text":"Vis sp4 fra starten - skab motivation og mål","width":100,"height":60,"x":580,"y":230},{"id":13,"category":"Start Doing","text":"Hjælp med god gruppedannelse","width":90,"height":50,"x":690,"y":230},{"id":14,"category":"Start Doing","text":"Sørg for at afleveringslink er åbne","width":90,"height":50,"x":800,"y":230},{"id":15,"category":"Start Doing","text":"Giv mere feedback på opgaver","width":90,"height":50,"x":580,"y":305},{"id":16,"category":"Start Doing","text":"Mere struktureret undervisning","width":90,"height":50,"x":690,"y":305},{"id":17,"category":"Start Doing","text":"Mulighed for ekstra opgaver","width":90,"height":50,"x":800,"y":305},{"id":18,"category":"Start Doing","text":"Sæt mere tid af til gennemgang - sørg for at alle er med","width":110,"height":65,"x":580,"y":380},{"id":19,"category":"Start Doing","text":"Fokuser længere tid på vigtige emner","width":90,"height":50,"x":690,"y":380},{"id":20,"category":"Start Doing","text":"Omformuler/opdater torsdagsopgaver","width":90,"height":50,"x":800,"y":380},{"id":21,"category":"Keep Doing","text":"Tillade sjov og humor","width":80,"height":45,"x":40,"y":80},{"id":22,"category":"Keep Doing","text":"Struktureret og tilrettelagt undervisning","width":100,"height":60,"x":150,"y":80},{"id":23,"category":"Keep Doing","text":"Give mod på at møde op","width":80,"height":45,"x":260,"y":80},{"id":24,"category":"Keep Doing","text":"Kombinere review med ny viden/teknologi","width":90,"height":50,"x":40,"y":155},{"id":25,"category":"Keep Doing","text":"Give udvidet viden uden for pensum om fredagen","width":100,"height":60,"x":150,"y":155},{"id":26,"category":"Keep Doing","text":"Have det samme skema","width":80,"height":45,"x":260,"y":155},{"id":27,"category":"Keep Doing","text":"Opdelte emner","width":80,"height":45,"x":40,"y":230},{"id":28,"category":"Keep Doing","text":"Processing","width":80,"height":45,"x":150,"y":230},{"id":29,"category":"Keep Doing","text":"Arbejde på denne måde","width":80,"height":45,"x":260,"y":230},{"id":30,"category":"Keep Doing","text":"Step by step opgaver","width":80,"height":45,"x":40,"y":305},{"id":31,"category":"Keep Doing","text":"Review","width":80,"height":45,"x":150,"y":305},{"id":32,"category":"Keep Doing","text":"Give frihed til at vælge","width":80,"height":45,"x":260,"y":305},{"id":33,"category":"Keep Doing","text":"Torsdagsopgaver","width":80,"height":45,"x":40,"y":380},{"id":34,"category":"Keep Doing","text":"Sprints","width":80,"height":45,"x":150,"y":380},{"id":35,"category":"Keep Doing","text":"Zoom mulighed når folk er syge","width":90,"height":50,"x":260,"y":380},{"id":36,"category":"Keep Doing","text":"Få mulighed for at nå til undervisning","width":90,"height":50,"x":40,"y":455},{"id":37,"category":"Keep Doing","text":"Det sjove - den sjoveste klasse","width":90,"height":50,"x":150,"y":455},{"id":38,"category":"Keep Doing","text":"Præsentationer og gruppearbejde","width":90,"height":50,"x":260,"y":455},{"id":39,"category":"Keep Doing","text":"Være opfordrende","width":80,"height":45,"x":40,"y":530}],"edges":[{"source":0,"target":6,"similarity":0.3548387096774194},{"source":0,"target":27,"similarity":0.38888888888888884},{"source":1,"target":10,"similarity":0.41025641025641024},{"source":1,"target":17,"similarity":0.4642857142857143},{"source":1,"target":26,"similarity":0.3571428571428571},{"source":1,"target":30,"similarity":0.3928571428571429},{"source":1,"target":33,"similarity":0.3571428571428571},{"source":2,"target":25,"similarity":0.3695652173913043},{"source":5,"target":39,"similarity":0.36},{"source":6,"target":17,"similarity":0.3548387096774194},{"source":10,"target":15,"similarity":0.3846153846153846},{"source":10,"target":17,"similarity":0.3846153846153846},{"source":10,"target":20,"similarity":0.3589743589743589},{"source":10,"target":30,"similarity":0.3589743589743589},{"source":13,"target":38,"similarity":0.3870967741935484},{"source":15,"target":17,"similarity":0.3571428571428571},{"source":15,"target":30,"similarity":0.3928571428571429},{"source":15,"target":33,"similarity":0.3571428571428571},{"source":16,"target":22,"similarity":0.5121951219512195},{"source":16,"target":36,"similarity":0.4736842105263158},{"source":17,"target":20,"similarity":0.4117647058823529},{"source":17,"target":30,"similarity":0.4814814814814815},{"source":17,"target":33,"similarity":0.37037037037037035},{"source":17,"target":35,"similarity":0.4},{"source":17,"target":36,"similarity":0.42105263157894735},{"source":20,"target":33,"similarity":0.4411764705882353},{"source":22,"target":36,"similarity":0.4390243902439024},{"source":23,"target":32,"similarity":0.375},{"source":30,"target":33,"similarity":0.44999999999999996},{"source":35,"target":36,"similarity":0.368421052631579}]};
+const contradictionData = [{"statement1":"Mere forklaring for hver linje kode","statement2":"Give frihed til at vælge","category1":"Start Doing","category2":"Keep Doing","tension":0.82,"theme":"Styring vs autonomi"},{"statement1":"Sæt mere tid af til gennemgang - sørg for at alle er med","statement2":"Differentieret undervisning på rep dage - opgaver til de der ikke har brug for gennemgang","category1":"Start Doing","category2":"Start Doing","tension":0.88,"theme":"Fælles tempo vs differentiering"},{"statement1":"Tag mindre hensyn til folk der konsekvent ikke dukker op","statement2":"Give mod på at møde op","category1":"Stop Doing","category2":"Keep Doing","tension":0.79,"theme":"Konsekvens vs motivation"},{"statement1":"Fokuser længere tid på vigtige emner","statement2":"Vi koder ikke nok sammen","category1":"Start Doing","category2":"Start Doing","tension":0.75,"theme":"Dybde vs bredde"},{"statement1":"Mere struktureret undervisning","statement2":"Tillade sjov og humor","category1":"Start Doing","category2":"Keep Doing","tension":0.71,"theme":"Struktur vs spontanitet"},{"statement1":"Holde mange pauser","statement2":"Sæt mere tid af til gennemgang - sørg for at alle er med","category1":"Stop Doing","category2":"Start Doing","tension":0.84,"theme":"Restitution vs indholdsdækning"},{"statement1":"Give udvidet viden uden for pensum om fredagen","statement2":"Sætte jer mere ind i tor og man opgaver","category1":"Keep Doing","category2":"Start Doing","tension":0.77,"theme":"Udvidelse vs konsolidering"},{"statement1":"Step by step opgaver","statement2":"Mulighed for ekstra opgaver","category1":"Keep Doing","category2":"Start Doing","tension":0.73,"theme":"Guidning vs udfordring"}];
+const ns = 'http://www.w3.org/2000/svg';
+const simSvg = document.getElementById('similarityGraph');
+const contraSvg = document.getElementById('contradictionGraph');
+// Draw edges
+        similarityData.edges.forEach(edge => {
+            const source = similarityData.nodes[edge.source];
+            const target = similarityData.nodes[edge.target];
+            const line = document.createElementNS(ns, 'line');
+            line.setAttribute('class', edge.similarity > 0.55 ? 'edge strong' : 'edge');
+            line.setAttribute('x1', source.x + source.width/2);
+            line.setAttribute('y1', source.y + source.height/2);
+            line.setAttribute('x2', target.x + target.width/2);
+            line.setAttribute('y2', target.y + target.height/2);
+            simSvg.appendChild(line);
+        });
+        
+        // Draw nodes
+        similarityData.nodes.forEach(node => {
+            const g = document.createElementNS(ns, 'g');
+            const rect = document.createElementNS(ns, 'rect');
+            rect.setAttribute('class', `node-box ${node.category.toLowerCase().replace(' ', '-')}`);
+            rect.setAttribute('x', node.x);
+            rect.setAttribute('y', node.y);
+            rect.setAttribute('width', node.width);
+            rect.setAttribute('height', node.height);
+            rect.setAttribute('rx', 4);
+            g.appendChild(rect);
+            
+            const maxCharsPerLine = Math.floor(node.width / 7);
+            const words = node.text.split(' ');
+            let lines = [];
+            let currentLine = words[0];
+            for (let i = 1; i < words.length; i++) {
+                const testLine = currentLine + ' ' + words[i];
+                if (testLine.length < maxCharsPerLine) currentLine = testLine;
+                else { lines.push(currentLine); currentLine = words[i]; }
+            }
+            lines.push(currentLine);
+            const maxLines = Math.floor(node.height / 14);
+            if (lines.length > maxLines) { lines = lines.slice(0, maxLines - 1); lines.push('...'); }
+            const startY = node.y + (node.height - lines.length * 14) / 2 + 12;
+            lines.forEach((line, i) => {
+                const text = document.createElementNS(ns, 'text');
+                text.setAttribute('class', 'node-text');
+                text.setAttribute('x', node.x + 6);
+                text.setAttribute('y', startY + (i * 14));
+                text.textContent = line;
+                g.appendChild(text);
+            });
+            simSvg.appendChild(g);
+        });
+        
+        // CONTRADICTION GRAPH
+       // const contraSvg = document.getElementById('contradictionGraph');
+        
+        // Helper function to get category color class
+        function getCategoryClass(category) {
+            return category.toLowerCase().replace(' ', '-');
+        }
+        
+        // Position nodes for contradiction graph (left vs right layout)
+        const nodeWidth = 180;
+        const nodeHeight = 90;
+        const leftX = 100;
+        const rightX = 1235 - nodeWidth - 100;
+        const startY = 100;
+        const verticalSpacing = 140;
+        
+        contradictionData.forEach((contra, index) => {
+            const y = startY + (index * verticalSpacing);
+            
+            // Draw edge
+            const line = document.createElementNS(ns, 'line');
+            line.setAttribute('class', contra.tension > 0.7 ? 'contradiction-edge high-tension' : 'contradiction-edge');
+            line.setAttribute('x1', leftX + nodeWidth);
+            line.setAttribute('y1', y + nodeHeight/2);
+            line.setAttribute('x2', rightX);
+            line.setAttribute('y2', y + nodeHeight/2);
+            contraSvg.appendChild(line);
+            
+            // Draw theme label
+            const midX = (leftX + nodeWidth + rightX) / 2;
+            const themeLabel = document.createElementNS(ns, 'text');
+            themeLabel.setAttribute('class', 'tension-label');
+            themeLabel.setAttribute('x', midX);
+            themeLabel.setAttribute('y', y + nodeHeight/2 - 8);
+            themeLabel.setAttribute('text-anchor', 'middle');
+            themeLabel.textContent = contra.theme;
+            contraSvg.appendChild(themeLabel);
+            
+            const scoreLabel = document.createElementNS(ns, 'text');
+            scoreLabel.setAttribute('class', 'tension-label');
+            scoreLabel.setAttribute('x', midX);
+            scoreLabel.setAttribute('y', y + nodeHeight/2 + 10);
+            scoreLabel.setAttribute('text-anchor', 'middle');
+            scoreLabel.setAttribute('font-size', '12');
+            scoreLabel.textContent = `⚡ ${contra.tension.toFixed(2)}`;
+            contraSvg.appendChild(scoreLabel);
+            
+            // Left node
+            const leftG = document.createElementNS(ns, 'g');
+            const leftRect = document.createElementNS(ns, 'rect');
+            leftRect.setAttribute('class', `node-box ${getCategoryClass(contra.category1)}`);
+            leftRect.setAttribute('x', leftX);
+            leftRect.setAttribute('y', y);
+            leftRect.setAttribute('width', nodeWidth);
+            leftRect.setAttribute('height', nodeHeight);
+            leftRect.setAttribute('rx', 6);
+            leftG.appendChild(leftRect);
+            
+            // Wrap left text
+            const leftWords = contra.statement1.split(' ');
+            let leftLines = [];
+            let currentLine = leftWords[0];
+            for (let i = 1; i < leftWords.length; i++) {
+                if ((currentLine + ' ' + leftWords[i]).length < 22) {
+                    currentLine += ' ' + leftWords[i];
+                } else {
+                    leftLines.push(currentLine);
+                    currentLine = leftWords[i];
+                }
+            }
+            leftLines.push(currentLine);
+            if (leftLines.length > 4) { leftLines = leftLines.slice(0, 3); leftLines.push('...'); }
+            
+            const leftStartY = y + (nodeHeight - leftLines.length * 18) / 2 + 14;
+            leftLines.forEach((line, i) => {
+                const text = document.createElementNS(ns, 'text');
+                text.setAttribute('class', 'contradiction-node-text');
+                text.setAttribute('x', leftX + 10);
+                text.setAttribute('y', leftStartY + (i * 18));
+                text.textContent = line;
+                leftG.appendChild(text);
+            });
+            contraSvg.appendChild(leftG);
+            
+            // Right node
+            const rightG = document.createElementNS(ns, 'g');
+            const rightRect = document.createElementNS(ns, 'rect');
+            rightRect.setAttribute('class', `node-box ${getCategoryClass(contra.category2)}`);
+            rightRect.setAttribute('x', rightX);
+            rightRect.setAttribute('y', y);
+            rightRect.setAttribute('width', nodeWidth);
+            rightRect.setAttribute('height', nodeHeight);
+            rightRect.setAttribute('rx', 6);
+            rightG.appendChild(rightRect);
+            
+            // Wrap right text
+            const rightWords = contra.statement2.split(' ');
+            let rightLines = [];
+            currentLine = rightWords[0];
+            for (let i = 1; i < rightWords.length; i++) {
+                if ((currentLine + ' ' + rightWords[i]).length < 22) {
+                    currentLine += ' ' + rightWords[i];
+                } else {
+                    rightLines.push(currentLine);
+                    currentLine = rightWords[i];
+                }
+            }
+            rightLines.push(currentLine);
+            if (rightLines.length > 4) { rightLines = rightLines.slice(0, 3); rightLines.push('...'); }
+            
+            const rightStartY = y + (nodeHeight - rightLines.length * 18) / 2 + 14;
+            rightLines.forEach((line, i) => {
+                const text = document.createElementNS(ns, 'text');
+                text.setAttribute('class', 'contradiction-node-text');
+                text.setAttribute('x', rightX + 10);
+                text.setAttribute('y', rightStartY + (i * 18));
+                text.textContent = line;
+                rightG.appendChild(text);
+            });
+            contraSvg.appendChild(rightG);
+        });
+        
+        // Category labels for similarity graph
+        const labels = [
+            { text: '✅ KEEP DOING', x: 200, y: 60, color: '#48bb78' },
+            { text: '⭐ START DOING', x: 800, y: 60, color: '#4299e1' },
+            { text: '🛑 STOP DOING', x: 500, y: 600, color: '#f56565' }
+        ];
+        labels.forEach(label => {
+            const text = document.createElementNS(ns, 'text');
+            text.setAttribute('class', 'category-label');
+            text.setAttribute('x', label.x);
+            text.setAttribute('y', label.y);
+            text.setAttribute('fill', label.color);
+            text.setAttribute('text-anchor', 'middle');
+            text.textContent = label.text;
+            simSvg.appendChild(text);
+        });
+</script>
+</body>
+</html>

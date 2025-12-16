@@ -13,38 +13,16 @@ import java.util.Map;
 /**
  * Parser for Delphi evaluation CSV files
  * CSV format: Category,Statement,Comment
+ * Now uses unified Statement model
  */
 public class DelphiCsvParser {
-    
-    public static class CategorizedStatement {
-        private String category;
-        private String statement;
-        private String comment;
-        
-        public CategorizedStatement(String category, String statement, String comment) {
-            this.category = category;
-            this.statement = statement;
-            this.comment = comment;
-        }
-        
-        public String getCategory() { return category; }
-        public String getStatement() { return statement; }
-        public String getComment() { return comment; }
-        
-        public String getFullStatement() {
-            if (comment != null && !comment.trim().isEmpty()) {
-                return statement + " (Kommentar: " + comment + ")";
-            }
-            return statement;
-        }
-    }
     
     /**
      * Parse categorized Delphi CSV
      * Returns map of category name -> list of statements
      */
-    public Map<String, List<CategorizedStatement>> parseCategorizedCsv(String filepath) {
-        Map<String, List<CategorizedStatement>> categorizedMap = new HashMap<>();
+    public Map<String, List<Statement>> parseCategorizedCsv(String filepath) {
+        Map<String, List<Statement>> categorizedMap = new HashMap<>();
         
         try (CSVReader reader = new CSVReader(new FileReader(filepath))) {
             List<String[]> rows = reader.readAll();
@@ -58,12 +36,13 @@ public class DelphiCsvParser {
                 }
                 
                 String category = row[0].trim();
-                String statement = row[1].trim();
+                String text = row[1].trim();
                 String comment = row.length > 2 ? row[2].trim() : "";
+                int weight = 0; // CSV doesn't have weights, default to 0
                 
-                CategorizedStatement catStatement = new CategorizedStatement(category, statement, comment);
+                Statement statement = new Statement(text, category, weight, comment);
                 
-                categorizedMap.computeIfAbsent(category, k -> new ArrayList<>()).add(catStatement);
+                categorizedMap.computeIfAbsent(category, k -> new ArrayList<>()).add(statement);
             }
             
         } catch (IOException | CsvException e) {
@@ -79,11 +58,11 @@ public class DelphiCsvParser {
      */
     public List<String> parseDelphiCsv(String filepath) {
         List<String> statements = new ArrayList<>();
-        Map<String, List<CategorizedStatement>> categorized = parseCategorizedCsv(filepath);
+        Map<String, List<Statement>> categorized = parseCategorizedCsv(filepath);
         
-        for (List<CategorizedStatement> catStatements : categorized.values()) {
-            for (CategorizedStatement cs : catStatements) {
-                statements.add(cs.getFullStatement());
+        for (List<Statement> catStatements : categorized.values()) {
+            for (Statement stmt : catStatements) {
+                statements.add(stmt.getFullStatement());
             }
         }
         
@@ -93,13 +72,13 @@ public class DelphiCsvParser {
     /**
      * Print summary of parsed statements
      */
-    public void printSummary(Map<String, List<CategorizedStatement>> categorized) {
+    public void printSummary(Map<String, List<Statement>> categorized) {
         System.out.println("\n=== Parsed Delphi Statements ===");
         int total = 0;
-        for (Map.Entry<String, List<CategorizedStatement>> entry : categorized.entrySet()) {
+        for (Map.Entry<String, List<Statement>> entry : categorized.entrySet()) {
             System.out.println("\n" + entry.getKey() + ": " + entry.getValue().size() + " statements");
-            for (CategorizedStatement cs : entry.getValue()) {
-                System.out.println("  - " + cs.getStatement());
+            for (Statement stmt : entry.getValue()) {
+                System.out.println("  - " + stmt.getText());
             }
             total += entry.getValue().size();
         }

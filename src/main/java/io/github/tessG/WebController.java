@@ -464,9 +464,6 @@ public class WebController {
         """;
     }
 
-    /**
-     * Process evaluation from Padlet board
-     */
     @PostMapping("/evaluate/padlet")
     public String evaluateFromPadlet(
             @RequestParam String type,
@@ -481,9 +478,18 @@ public class WebController {
                 throw new RuntimeException("PADLET_API_KEY environment variable not set");
             }
 
-            // Use existing GenericEvaluationWorkflow
-            GenericEvaluationWorkflow workflow = new GenericEvaluationWorkflow(padletApiKey, null);
-            String posterPath = workflow.executeWorkflow(padletId, type);
+            // Use GenericEvaluationWorkflow with appropriate method
+            GenericEvaluationWorkflow workflow = new GenericEvaluationWorkflow(padletApiKey);
+            String posterPath;
+
+            // Determine which workflow to use based on evaluation type
+            if (type.toLowerCase().contains("delphi")) {
+                // Delphi evaluation - use dashboard workflow
+                posterPath = workflow.executeDelphiWorkflow(padletId, type);
+            } else {
+                // DSC or other evaluations - use simple workflow
+                posterPath = workflow.executeDSCWorkflow(padletId, type);
+            }
 
             System.out.println("✅ Poster generated: " + posterPath);
 
@@ -496,10 +502,6 @@ public class WebController {
             return generateErrorPage("Error processing Padlet: " + e.getMessage());
         }
     }
-
-    /**
-     * Process evaluation from uploaded CSV
-     */
     @PostMapping("/evaluate/csv")
     public String evaluateFromCsv(
             @RequestParam MultipartFile file,
@@ -570,107 +572,119 @@ public class WebController {
     }
 
     /**
-     * Generate preview page with embedded poster and download button
+     * Generate preview page with styling appropriate for poster type
+     * Detects Delphi dashboard vs DSC poster and applies different wrapper styles
      */
     private String generatePreviewPage(String posterPath) throws IOException {
         Path posterFile = Paths.get(posterPath);
         String posterHtml = Files.readString(posterFile);
         String filename = posterFile.getFileName().toString();
 
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Poster Preview</title>
-                <style>
-                    body {
-                        margin: 0;
-                        padding: 0;
-                        font-family: Arial, sans-serif;
-                        background:#F5F3EE;
-                    }
-                    .header {
-                        background: #F5F3EE;
-                        padding: 20px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        position: sticky;
-                        top: 0;
-                        z-index: 1000;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    }
-                    .header h2 {
-                        margin: 0;
-                        color: #333;
-                    }
-                    .buttons {
-                        display: flex;
-                        gap: 10px;
-                    }
-                    .btn {
-                        padding: 12px 24px;
-                        border: none;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        font-size: 16px;
-                        text-decoration: none;
-                        display: inline-block;
-                    }
-                    .btn-download {
-                        background: #4299e1;
-                        color: white;
-                    }
-                    .btn-download:hover {
-                        background: #3182ce;
-                    }
-                    .btn-home {
-                        background: #edf2f7;
-                        color: #333;
-                    }
-                    .btn-home:hover {
-                        background: #e2e8f0;
-                    }
-                    .preview-container {
-                        margin: 0;
-                        padding: 20px;
-                        display: flex;
-                        justify-content: center;
-                    }
-                    .poster-wrapper {
-                        background: white;
-                        padding: 20px;
-                        border-radius: 8px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                        width: 1000px;  /* Changed from max-width to width */
-                    }
-                    iframe {
-                        border: none;
-                        width: 100%%;
-                        min-height: 1400px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h2>✅ Poster Generated Successfully!</h2>
-                    <div class="buttons">
-                        <a href="/" class="btn btn-home">🏠 Create Another</a>
-                    </div>
-                </div>
-                
-                <div class="preview-container">
-                    <div class="poster-wrapper">
-                        <iframe srcdoc="%s"></iframe>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """.formatted(
-                escapeHtmlForAttribute(posterHtml)
-        );
+        // Detect poster type
+        boolean isDelphiDashboard = posterHtml.contains("contradictory-graph") ||
+                posterHtml.contains("dashboard") ||
+                filename.toLowerCase().contains("delphi");
+
+        // Build appropriate styles based on poster type
+        String posterWrapperStyle;
+        String iframeStyle;
+
+        if (isDelphiDashboard) {
+            // Delphi dashboard - let it scale naturally, no constraints
+            posterWrapperStyle = "background: transparent; padding: 0; border-radius: 0; " +
+                    "box-shadow: none; width: auto; max-width: 100%; overflow: auto;";
+            iframeStyle = "border: none; width: 100%; height: 800px;";
+        } else {
+            // DSC poster - constrain to 1000px width
+            posterWrapperStyle = "background: white; padding: 20px; border-radius: 8px; " +
+                    "box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 1000px;";
+            iframeStyle = "border: none; width: 100%; min-height: 1400px;";
+        }
+
+        return "<!DOCTYPE html>\n" +
+                "<html>\n" +
+                "<head>\n" +
+                "    <meta charset=\"UTF-8\">\n" +
+                "    <title>Poster Preview</title>\n" +
+                "    <style>\n" +
+                "        body {\n" +
+                "            margin: 0;\n" +
+                "            padding: 0;\n" +
+                "            font-family: Arial, sans-serif;\n" +
+                "            background:#F5F3EE;\n" +
+                "        }\n" +
+                "        .header {\n" +
+                "            background: #F5F3EE;\n" +
+                "            padding: 20px;\n" +
+                "            box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n" +
+                "            position: sticky;\n" +
+                "            top: 0;\n" +
+                "            z-index: 1000;\n" +
+                "            display: flex;\n" +
+                "            justify-content: space-between;\n" +
+                "            align-items: center;\n" +
+                "        }\n" +
+                "        .header h2 {\n" +
+                "            margin: 0;\n" +
+                "            color: #333;\n" +
+                "        }\n" +
+                "        .buttons {\n" +
+                "            display: flex;\n" +
+                "            gap: 10px;\n" +
+                "        }\n" +
+                "        .btn {\n" +
+                "            padding: 12px 24px;\n" +
+                "            border: none;\n" +
+                "            border-radius: 4px;\n" +
+                "            cursor: pointer;\n" +
+                "            font-size: 16px;\n" +
+                "            text-decoration: none;\n" +
+                "            display: inline-block;\n" +
+                "        }\n" +
+                "        .btn-download {\n" +
+                "            background: #4299e1;\n" +
+                "            color: white;\n" +
+                "        }\n" +
+                "        .btn-download:hover {\n" +
+                "            background: #3182ce;\n" +
+                "        }\n" +
+                "        .btn-home {\n" +
+                "            background: #edf2f7;\n" +
+                "            color: #333;\n" +
+                "        }\n" +
+                "        .btn-home:hover {\n" +
+                "            background: #e2e8f0;\n" +
+                "        }\n" +
+                "        .preview-container {\n" +
+                "            margin: 0;\n" +
+                "            padding: 20px;\n" +
+                "            justify-content: center;\n" +
+                "        }\n" +
+                "        .poster-wrapper {\n" +
+                "            " + posterWrapperStyle + "\n" +
+                "        }\n" +
+                "        iframe {\n" +
+                "            " + iframeStyle + "\n" +
+                "        }\n" +
+                "    </style>\n" +
+                "</head>\n" +
+                "<body>\n" +
+                "    <div class=\"header\">\n" +
+                "        <h2>✅ Poster Generated Successfully!</h2>\n" +
+                "        <div class=\"buttons\">\n" +
+                "            <a href=\"/\" class=\"btn btn-home\">🏠 Create Another</a>\n" +
+                "        </div>\n" +
+                "    </div>\n" +
+                "    \n" +
+                "    <div class=\"preview-container\">\n" +
+                "        <div class=\"poster-wrapper\">\n" +
+                "            <iframe srcdoc=\"" + escapeHtmlForAttribute(posterHtml) + "\"></iframe>\n" +
+                "        </div>\n" +
+                "    </div>\n" +
+                "</body>\n" +
+                "</html>";
     }
+
 
     /**
      * Generate error page

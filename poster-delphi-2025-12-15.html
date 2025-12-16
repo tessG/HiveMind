@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Student Evaluering - Keep, Stop, Start</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; }
+        .poster { width: 900px; background: white; padding: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
+        h1 { font-family: 'Bangers', cursive; font-size: 42px; text-align: center; margin: 0 0 10px 0; color: #333; line-height: 1.2; }
+        .subtitle { text-align: center; font-size: 14px; color: #666; margin-bottom: 20px; }
+        .student-wisdom { position: absolute; top: 40px; right: 40px; width: 220px; background: #000; color: #fff; padding: 15px; border: 3px solid #fff; box-shadow: 0 0 0 3px #000; transform: rotate(3deg); }
+        .student-wisdom .label { font-family: 'Permanent Marker', cursive; font-size: 11px; text-align: center; border-bottom: 2px solid #fff; padding-bottom: 5px; margin-bottom: 8px; letter-spacing: 1px; }
+        .student-wisdom .quote { font-family: 'Bangers', cursive; font-size: 18px; text-align: center; line-height: 1.3; }
+        .graph-container { position: relative; margin: 30px 0; }
+        svg { display: block; margin: 0 auto; }
+        .edge { stroke: #999; stroke-width: 1; stroke-opacity: 0.25; fill: none; }
+        .edge.strong { stroke-width: 2; stroke-opacity: 0.5; stroke: #555; }
+        .node-box { cursor: pointer; transition: all 0.2s; stroke-width: 2; }
+        .node-box.keep-doing { fill: #e6f7ed; stroke: #48bb78; }
+        .node-box.stop-doing { fill: #fee; stroke: #f56565; }
+        .node-box.start-doing { fill: #e6f2ff; stroke: #4299e1; }
+        .node-box:hover { stroke-width: 3; filter: brightness(0.95); }
+        .node-text { font-size: 8px; fill: #333; pointer-events: none; }
+        .category-label { font-size: 20px; font-weight: bold; font-family: 'Permanent Marker', cursive; }
+        .connections-info { text-align: center; font-size: 13px; color: #999; margin-top: 10px; font-style: italic; }
+        .bottom-section { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .summary-box { background: #f9f9f9; padding: 20px; border-left: 4px solid #48bb78; display: none; }
+        .summary-box h3 { margin: 0 0 10px 0; font-family: 'Permanent Marker', cursive; color: #48bb78; font-size: 18px; }
+        .summary-box p { margin: 0; line-height: 1.6; font-size: 14px; color: #333; }
+        .insight-box { background: #fff3cd; padding: 20px; border-left: 4px solid #f59e0b; }
+        .insight-box h3 { margin: 0 0 10px 0; font-family: 'Permanent Marker', cursive; color: #f59e0b; font-size: 18px; }
+        .insight-box p { margin: 0; line-height: 1.6; font-size: 14px; color: #333; }
+        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #999; padding: 15px; border-top: 1px solid #eee; }
+        
+        @media print { 
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            body { 
+                background: white; 
+                padding: 0;
+                margin: 0;
+            }
+            header {
+                display: none !important;
+            }
+            .poster { 
+                box-shadow: none;
+                page-break-inside: avoid;
+                padding: 20px;
+                width: 100%;
+            }
+            h1 { font-size: 36px; margin: 0 0 5px 0; }
+            .subtitle { margin-bottom: 10px; }
+            .graph-container { 
+                margin: 10px 0;
+                max-height: 280px;
+            }
+            svg {
+                max-height: 260px;
+                transform: scale(0.85);
+                transform-origin: top center;
+            }
+            .bottom-section { 
+                margin-top: 10px;
+                gap: 10px;
+                grid-template-columns: 1fr;
+            }
+            .summary-box {
+                display: none !important;
+            }
+            .insight-box { 
+                padding: 12px;
+            }
+            .insight-box h3 {
+                font-size: 14px;
+            }
+            .insight-box p {
+                font-size: 11px;
+                line-height: 1.3;
+            }
+            .footer {
+                margin-top: 8px;
+                padding: 5px;
+                font-size: 9px;
+            }
+            .student-wisdom {
+                width: 160px;
+                padding: 10px;
+            }
+            .student-wisdom .quote {
+                font-size: 14px;
+            }
+        }
+    </style></head>
+<body>
+    <div class="poster">
+        <div class="student-wisdom">
+            <div class="label">STUDENT WISDOM</div>
+            <div class="quote">"Tag mindre hensyn til folk der konsekvent ikke dukker op"</div>
+        </div>
+        
+        <h1>Studerende ønsker mere struktur, bedre kommunikation og balance mellem frihed og vejledning</h1>
+        <div class="subtitle">Netværk af forbundne student-udsagn</div>
+        
+        <div class="graph-container">
+            <svg id="graph" width="900" height="700"></svg>
+            <div class="connections-info">30 forbindelser mellem 40 udsagn</div>
+        </div>
+        
+        <div class="bottom-section">
+            <div class="summary-box">
+                <h3>📊 Sammenfatning</h3>
+                <p>Feedbacken viser et stærkt ønske om mere struktureret undervisning med klare tidsplaner, samtidig med at der værdsættes frihed og humor i undervisningen. Der er behov for bedre kommunikation via email, mere fælles coding og differentieret undervisning. Mange er glade for nuværende aktiviteter som sprints, torsdagsopgaver og gruppearbejde.</p>
+            </div>
+            <div class="insight-box">
+                <h3>💡 Nøgleindsigt</h3>
+                <p>Der er en tydelig spænding mellem ønsket om minutiøs planlægning og fleksibilitet - studerende vil have både mere struktur OG mere tilpasning til deres individuelle behov samtidig</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            This poster was automatically generated using AI analysis of student feedback • 2025-12-15
+        </div>
+    </div>
+    
+    <script>
+        const graphData = {"nodes":[{"id":0,"category":"Stop Doing","text":"Holde mange pauser","width":80,"height":45,"x":330,"y":530},{"id":1,"category":"Stop Doing","text":"Blande sorig i samme opgaver","width":90,"height":50,"x":440,"y":530},{"id":2,"category":"Stop Doing","text":"Online undervisning om tirsdagen","width":90,"height":50,"x":550,"y":530},{"id":3,"category":"Stop Doing","text":"Tag mindre hensyn til folk der konsekvent ikke dukker op","width":110,"height":65,"x":330,"y":605},{"id":4,"category":"Stop Doing","text":"Wokeness","width":80,"height":45,"x":440,"y":605},{"id":5,"category":"Stop Doing","text":"Ændre grupper flere gange","width":90,"height":50,"x":550,"y":605},{"id":6,"category":"Start Doing","text":"Klar planer for tider og pauser","width":90,"height":50,"x":580,"y":80},{"id":7,"category":"Start Doing","text":"Mere forklaring for hver linje kode","width":90,"height":50,"x":690,"y":80},{"id":8,"category":"Start Doing","text":"Differentieret undervisning på rep dage - opgaver til de der ikke har brug for gennemgang","width":110,"height":65,"x":800,"y":80},{"id":9,"category":"Start Doing","text":"Svare emails - nemmere kommunikation","width":90,"height":50,"x":580,"y":155},{"id":10,"category":"Start Doing","text":"Sætte jer mere ind i tor og man opgaver","width":90,"height":50,"x":690,"y":155},{"id":11,"category":"Start Doing","text":"Vi koder ikke nok sammen","width":80,"height":45,"x":800,"y":155},{"id":12,"category":"Start Doing","text":"Vis sp4 fra starten - skab motivation og mål","width":100,"height":60,"x":580,"y":230},{"id":13,"category":"Start Doing","text":"Hjælp med god gruppedannelse","width":90,"height":50,"x":690,"y":230},{"id":14,"category":"Start Doing","text":"Sørg for at afleveringslink er åbne","width":90,"height":50,"x":800,"y":230},{"id":15,"category":"Start Doing","text":"Giv mere feedback på opgaver","width":90,"height":50,"x":580,"y":305},{"id":16,"category":"Start Doing","text":"Mere struktureret undervisning","width":90,"height":50,"x":690,"y":305},{"id":17,"category":"Start Doing","text":"Mulighed for ekstra opgaver","width":90,"height":50,"x":800,"y":305},{"id":18,"category":"Start Doing","text":"Sæt mere tid af til gennemgang - sørg for at alle er med","width":110,"height":65,"x":580,"y":380},{"id":19,"category":"Start Doing","text":"Fokuser længere tid på vigtige emner","width":90,"height":50,"x":690,"y":380},{"id":20,"category":"Start Doing","text":"Omformuler/opdater torsdagsopgaver","width":90,"height":50,"x":800,"y":380},{"id":21,"category":"Keep Doing","text":"Tillade sjov og humor","width":80,"height":45,"x":40,"y":80},{"id":22,"category":"Keep Doing","text":"Struktureret og tilrettelagt undervisning","width":100,"height":60,"x":150,"y":80},{"id":23,"category":"Keep Doing","text":"Give mod på at møde op","width":80,"height":45,"x":260,"y":80},{"id":24,"category":"Keep Doing","text":"Kombinere review med ny viden/teknologi","width":90,"height":50,"x":40,"y":155},{"id":25,"category":"Keep Doing","text":"Give udvidet viden uden for pensum om fredagen","width":100,"height":60,"x":150,"y":155},{"id":26,"category":"Keep Doing","text":"Have det samme skema","width":80,"height":45,"x":260,"y":155},{"id":27,"category":"Keep Doing","text":"Opdelte emner","width":80,"height":45,"x":40,"y":230},{"id":28,"category":"Keep Doing","text":"Processing","width":80,"height":45,"x":150,"y":230},{"id":29,"category":"Keep Doing","text":"Arbejde på denne måde","width":80,"height":45,"x":260,"y":230},{"id":30,"category":"Keep Doing","text":"Step by step opgaver","width":80,"height":45,"x":40,"y":305},{"id":31,"category":"Keep Doing","text":"Review","width":80,"height":45,"x":150,"y":305},{"id":32,"category":"Keep Doing","text":"Give frihed til at vælge","width":80,"height":45,"x":260,"y":305},{"id":33,"category":"Keep Doing","text":"Torsdagsopgaver","width":80,"height":45,"x":40,"y":380},{"id":34,"category":"Keep Doing","text":"Sprints","width":80,"height":45,"x":150,"y":380},{"id":35,"category":"Keep Doing","text":"Zoom mulighed når folk er syge","width":90,"height":50,"x":260,"y":380},{"id":36,"category":"Keep Doing","text":"Få mulighed for at nå til undervisning","width":90,"height":50,"x":40,"y":455},{"id":37,"category":"Keep Doing","text":"Det sjove - den sjoveste klasse","width":90,"height":50,"x":150,"y":455},{"id":38,"category":"Keep Doing","text":"Præsentationer og gruppearbejde","width":90,"height":50,"x":260,"y":455},{"id":39,"category":"Keep Doing","text":"Være opfordrende","width":80,"height":45,"x":40,"y":530}],"edges":[{"source":0,"target":6,"similarity":0.355},{"source":0,"target":27,"similarity":0.389},{"source":1,"target":10,"similarity":0.41},{"source":1,"target":17,"similarity":0.464},{"source":1,"target":26,"similarity":0.357},{"source":1,"target":30,"similarity":0.393},{"source":1,"target":33,"similarity":0.357},{"source":2,"target":25,"similarity":0.37},{"source":5,"target":39,"similarity":0.36},{"source":6,"target":17,"similarity":0.355},{"source":10,"target":15,"similarity":0.385},{"source":10,"target":17,"similarity":0.385},{"source":10,"target":20,"similarity":0.359},{"source":10,"target":30,"similarity":0.359},{"source":13,"target":38,"similarity":0.387},{"source":15,"target":17,"similarity":0.357},{"source":15,"target":30,"similarity":0.393},{"source":15,"target":33,"similarity":0.357},{"source":16,"target":22,"similarity":0.512},{"source":16,"target":36,"similarity":0.474},{"source":17,"target":20,"similarity":0.412},{"source":17,"target":30,"similarity":0.481},{"source":17,"target":33,"similarity":0.37},{"source":17,"target":35,"similarity":0.4},{"source":17,"target":36,"similarity":0.421},{"source":20,"target":33,"similarity":0.441},{"source":22,"target":36,"similarity":0.439},{"source":23,"target":32,"similarity":0.375},{"source":30,"target":33,"similarity":0.45},{"source":35,"target":36,"similarity":0.368}]};
+        const svg = document.getElementById('graph');
+        const ns = 'http://www.w3.org/2000/svg';
+        
+        // Draw edges
+        graphData.edges.forEach(edge => {
+            const source = graphData.nodes[edge.source];
+            const target = graphData.nodes[edge.target];
+            const line = document.createElementNS(ns, 'line');
+            line.setAttribute('class', edge.similarity > 0.55 ? 'edge strong' : 'edge');
+            line.setAttribute('x1', source.x + source.width/2);
+            line.setAttribute('y1', source.y + source.height/2);
+            line.setAttribute('x2', target.x + target.width/2);
+            line.setAttribute('y2', target.y + target.height/2);
+            svg.appendChild(line);
+        });
+        
+        // Draw nodes
+        graphData.nodes.forEach(node => {
+            const g = document.createElementNS(ns, 'g');
+            const rect = document.createElementNS(ns, 'rect');
+            rect.setAttribute('class', `node-box ${node.category.toLowerCase().replace(' ', '-')}`);
+            rect.setAttribute('x', node.x);
+            rect.setAttribute('y', node.y);
+            rect.setAttribute('width', node.width);
+            rect.setAttribute('height', node.height);
+            rect.setAttribute('rx', 3);
+            g.appendChild(rect);
+            
+            const maxCharsPerLine = Math.floor(node.width / 5.5);
+            const words = node.text.split(' ');
+            let lines = [];
+            let currentLine = words[0];
+            for (let i = 1; i < words.length; i++) {
+                const testLine = currentLine + ' ' + words[i];
+                if (testLine.length < maxCharsPerLine) currentLine = testLine;
+                else { lines.push(currentLine); currentLine = words[i]; }
+            }
+            lines.push(currentLine);
+            const maxLines = Math.floor(node.height / 10);
+            if (lines.length > maxLines) { lines = lines.slice(0, maxLines - 1); lines.push('...'); }
+            const startY = node.y + (node.height - lines.length * 10) / 2 + 8;
+            lines.forEach((line, i) => {
+                const text = document.createElementNS(ns, 'text');
+                text.setAttribute('class', 'node-text');
+                text.setAttribute('x', node.x + 4);
+                text.setAttribute('y', startY + (i * 10));
+                text.textContent = line;
+                g.appendChild(text);
+            });
+            svg.appendChild(g);
+        });
+        
+        // Category labels
+        const labels = [
+            { text: '✅ KEEP DOING', x: 180, y: 50, color: '#48bb78' },
+            { text: '⭐ START DOING', x: 720, y: 50, color: '#4299e1' },
+            { text: '🛑 STOP DOING', x: 450, y: 500, color: '#f56565' }
+        ];
+        labels.forEach(label => {
+            const text = document.createElementNS(ns, 'text');
+            text.setAttribute('class', 'category-label');
+            text.setAttribute('x', label.x);
+            text.setAttribute('y', label.y);
+            text.setAttribute('fill', label.color);
+            text.setAttribute('text-anchor', 'middle');
+            text.textContent = label.text;
+            svg.appendChild(text);
+        });
+    </script>
+</body>
+</html>
