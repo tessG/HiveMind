@@ -194,19 +194,22 @@ public class PosterGenerator {
         prompt.append("POSTER FORMAT:\n");
         prompt.append("For print: landscape A3\n");
         prompt.append("On screen: scale to fit\n");
+        prompt.append("WORDCLOUD med udsagn rundt om\n");
+
         prompt.append("layout:\n");
         prompt.append(" ------------------------------------------------------------ \n");
         prompt.append("| title og subtitle          |         funny statement |\n");
         prompt.append("|----------------------------------------------------------- |\n");
         prompt.append("| statements  |    statements      |  statements             |\n");
-        prompt.append("| statements  |    wordcloud       |  statements             |\n");
+        prompt.append("| statements  |    WORDCLOUD       |  statements             |\n");
         prompt.append("| statements  |    statements      |  statements             |\n");
         prompt.append("-----------------------------------------------------------  |\n");
-        prompt.append("|          SUMMARY           |      KEY INSIGHT       |\n");
-        prompt.append("|____________________________________________________ |\n");
-        prompt.append("| Dare summary |    Share summary      |  Care summary   |\n");
-
-
+        prompt.append("|          SUMMARY                  |      KEY INSIGHT       |\n");
+        prompt.append("|___________________________________________________________ |\n");
+        prompt.append("| Dare summary |    Share summary      |  Care summary        |\n");
+        prompt.append("|___________________________________________________________ |\n");
+        prompt.append("|                FOOTER                                     |\n");
+        prompt.append("|___________________________________________________________ |\n");
         prompt.append("1. HEADER :\n");
         prompt.append("   - Titel: 'Student Vibes' "+headline+"\n");
         prompt.append("   - Subtitle: sætning der indfanger essensen af statements\n");
@@ -214,7 +217,6 @@ public class PosterGenerator {
         prompt.append("     * Kun citatet - INGEN titel\n");
         prompt.append("     * Sort baggrund, hvid Bangers tekst (16px)\n");
         prompt.append("     * 180px bred, padding 12px, roteret 4°\n\n");
-
         prompt.append("2. WORDCLOUD + BUBBLES :\n");
         prompt.append("   \n");
         prompt.append("   WORDCLOUD på baggrund af udsagn (center, 300×300px):\n");
@@ -227,7 +229,6 @@ public class PosterGenerator {
         prompt.append("   - Tæt pakket, roterede ord\n");
         prompt.append("   \n");
         prompt.append("   SPEECH BUBBLES rundt om wordcloud(12-14 stykker TOTAL):\n");
-        prompt.append("   VIGTIGT: Lav FÆRRE, BEDRE udsagn\n");
         prompt.append("   - Cluster lignende udsagn sammen\n");
         prompt.append("   - Hver bubble repræsenterer 2-4 originale udsagn\n");
         prompt.append("   - Skriv sammenfattende udsagn der dækker temaet\n");
@@ -246,8 +247,7 @@ public class PosterGenerator {
         prompt.append("     * Rotation: -6° til +6°\n");
         prompt.append("     * Subtle box-shadow\n");
         prompt.append("   - Placer semantisk nær relateret ord\n");
-        prompt.append("   - FYLD RUMMET \n\n");
-
+        prompt.append("   \n");
         prompt.append("   SAMMENFATNING (200px):\n");
         prompt.append("   - height: fit to content\n");
         prompt.append("   - Titel: \"📊 Sammenfatning\" (Permanent Marker, 22px)\n");
@@ -263,6 +263,7 @@ public class PosterGenerator {
         prompt.append("   - 2-3 sætninger om vigtigste observation\n");
         prompt.append("   - Padding: 20px\n");
         prompt.append("   - Line-height: 1.6\n\n");
+        prompt.append("   \n");
         prompt.append("4.  3 KATEGORI KOLONNER (dare, share, care)):\n");
         prompt.append("   - Side-by-side, equal width\n");
         prompt.append("   - Hver kolonne:\n");
@@ -270,6 +271,7 @@ public class PosterGenerator {
         prompt.append("     * Farvet top-border (4px)\n");
         prompt.append("     * Background hvid\n");
         prompt.append("     * Padding: 15px\n\n");
+        prompt.append("   \n");
         prompt.append("5. FOOTER (20px høj):\n");
         prompt.append("   - Full-width\n");
         prompt.append("   - Text: 'This poster was automatically generated using AI analysis of student feedback • [dagens dato]'\n");
