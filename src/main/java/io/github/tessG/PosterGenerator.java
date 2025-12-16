@@ -227,6 +227,8 @@ public class PosterGenerator {
         prompt.append("   - Total: ~25 ord\n");
         prompt.append("   - Farver: gul/rød/grøn med sort shadow\n");
         prompt.append("   - Tæt pakket, roterede ord\n");
+        prompt.append("   - Top ord placeres i centrum af skyen\n");
+        prompt.append("   - mere bred end høj, bubler må gerne dække ord i periferien\n");
         prompt.append("   \n");
         prompt.append("   SPEECH BUBBLES rundt om wordcloud(12-14 stykker TOTAL):\n");
         prompt.append("   - Cluster lignende udsagn sammen\n");
