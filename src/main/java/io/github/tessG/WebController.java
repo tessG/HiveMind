@@ -334,7 +334,7 @@ public class WebController {
                         </div>
                     </div>
                   
-                    <p class="tagline">Efterbehandling af dét, de studerende siger</p>
+                    <p class="tagline">Hvad er det de studerende siger</p>
                     
                 
                         <ol class="steps">
