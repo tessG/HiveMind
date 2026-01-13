@@ -12,3 +12,8 @@
 ----------------------------------------------------  |   -
 |          SUMMARY           |      suggestions       |
 |____________________________________________________ |
+
+
+
+
+If I remove display:flex from poster-preview I get to see the poster. Otherwise I only have a narrow part of it. I think the scaling isn't working.

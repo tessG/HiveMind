@@ -176,8 +176,7 @@ public class PosterGenerator {
         prompt.append("Generer en plakat med følgende indhold\n\n");
         prompt.append("Titel:\n"+headline+"\n");
         prompt.append("Sjovt udsagn:\n"+funnyStatement+"\n");
-        prompt.append("Sammenfatning:\n"+summary+"\n");
-        prompt.append("Nøgleindsigt:\n"+keyInsight+"\n");
+
         prompt.append("Wordcloud på baggrund af udsagn/statements:\n");
         prompt.append("\nUdsagn:\n");
         for (int i = 0; i < statements.size(); i++) {
@@ -187,14 +186,13 @@ public class PosterGenerator {
         for (Category category : config.getCategories()) {
             prompt.append("- ").append(category.getName()).append(" (").append(category.getEmoji()).append(")\n");
         }
+        prompt.append("Sammenfatning:\n"+summary+"\n");
+        prompt.append("Nøgleindsigt:\n"+keyInsight+"\n");
 
-
-        prompt.append("\n=== GENERER EN KOMPLET HTML POSTER ===\n\n");
 
         prompt.append("POSTER FORMAT:\n");
         prompt.append("For print: landscape A3\n");
         prompt.append("On screen: scale to fit\n");
-        prompt.append("WORDCLOUD med udsagn rundt om\n");
 
         prompt.append("layout:\n");
         prompt.append(" ------------------------------------------------------------ \n");
