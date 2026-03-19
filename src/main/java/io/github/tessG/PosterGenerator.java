@@ -174,6 +174,7 @@ public class PosterGenerator {
     private static String buildDSCPrompt(List<String> statements,String headline, String funnyStatement,String summary,String keyInsight, EvaluationConfig config) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("Generer en plakat med følgende \n\n");
+        prompt.append("Make it good for both screen and for print (A3)\n");
         prompt.append("layout:\n");
         prompt.append(" ------------------------------------------------------------ \n");
         prompt.append("| title og subtitle          |     funny statement           |\n");
@@ -234,6 +235,7 @@ public class PosterGenerator {
         prompt.append("- INGEN markdown\n");
         prompt.append("- INGEN forklaring\n");
         prompt.append("- INGEN debug text\n");
+
 
         return prompt.toString();
     }
