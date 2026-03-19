@@ -196,7 +196,7 @@ public class PosterGenerator {
 
         prompt.append("layout:\n");
         prompt.append(" ------------------------------------------------------------ \n");
-        prompt.append("| title og subtitle          |         funny statement |\n");
+        prompt.append("| title og subtitle          |     funny statement           |\n");
         prompt.append("|----------------------------------------------------------- |\n");
         prompt.append("| statements  |    statements      |  statements             |\n");
         prompt.append("| statements  |    WORDCLOUD       |  statements             |\n");
@@ -209,7 +209,7 @@ public class PosterGenerator {
         prompt.append("|                FOOTER                                     |\n");
         prompt.append("|___________________________________________________________ |\n");
         prompt.append("1. HEADER :\n");
-        prompt.append("   - Titel: 'Student Vibes' "+headline+"\n");
+        prompt.append("   - Titel: 'Student Vibes' "+headline+"  DO NOT INCLUDE ANY ICONS!!\n");
         prompt.append("   - Subtitle: sætning der indfanger essensen af statements\n");
         prompt.append("   - Quote badge:"+funnyStatement+" Top-right, absolut position\n");
         prompt.append("     * Kun citatet - INGEN titel\n");

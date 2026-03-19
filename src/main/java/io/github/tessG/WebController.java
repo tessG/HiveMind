@@ -589,17 +589,17 @@ public class WebController {
         String posterWrapperStyle;
         String iframeStyle;
 
-        if (isDelphiDashboard) {
+       // if (isDelphiDashboard) {
             // Delphi dashboard - let it scale naturally, no constraints
             posterWrapperStyle = "background: transparent; padding: 0; border-radius: 0; " +
                     "box-shadow: none; width: auto; max-width: 100%; overflow: auto;";
             iframeStyle = "border: none; width: 100%; height: 800px;";
-        } else {
+       /* } else {
             // DSC poster - constrain to 1000px width
             posterWrapperStyle = "background: white; padding: 20px; border-radius: 8px; " +
                     "box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 1000px;";
             iframeStyle = "border: none; width: 100%; min-height: 1400px;";
-        }
+        }*/
 
         return "<!DOCTYPE html>\n" +
                 "<html>\n" +
