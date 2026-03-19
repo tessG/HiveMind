@@ -666,6 +666,30 @@ public class WebController {
                 "        iframe {\n" +
                 "            " + iframeStyle + "\n" +
                 "        }\n" +
+                "          @media print {\n" +
+
+            /* Hide everything */
+            "body * {\n" +
+             "       visibility: hidden;\n" +
+             " }\n" +
+
+            /* Show only your target div and its contents */
+  "#posterwrapper, #posterwrapper * {"+
+                  "  visibility: visible;"+
+  "}"+
+
+            /* Position it to fill the page */
+ " #posterwrapper {"+
+               " position: absolute;"+
+                "top: 0;"+
+           "     left: 0;"+
+              "  width: 100%;"+
+           " }"+
+       " }"+
+
+
+
+
                 "    </style>\n" +
                 "</head>\n" +
                 "<body>\n" +
