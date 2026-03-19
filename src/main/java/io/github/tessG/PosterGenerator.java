@@ -173,27 +173,7 @@ public class PosterGenerator {
 
     private static String buildDSCPrompt(List<String> statements,String headline, String funnyStatement,String summary,String keyInsight, EvaluationConfig config) {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("Generer en plakat med følgende indhold\n\n");
-        prompt.append("Titel:\n"+headline+"\n");
-        prompt.append("Sjovt udsagn:\n"+funnyStatement+"\n");
-
-        prompt.append("Wordcloud på baggrund af udsagn/statements:\n");
-        prompt.append("\nUdsagn:\n");
-        for (int i = 0; i < statements.size(); i++) {
-            prompt.append((i + 1)).append(". ").append(statements.get(i)).append("\n");
-        }
-        prompt.append("Kategoriser udsagnene i disse kategorier:\n");
-        for (Category category : config.getCategories()) {
-            prompt.append("- ").append(category.getName()).append(" (").append(category.getEmoji()).append(")\n");
-        }
-        prompt.append("Sammenfatning:\n"+summary+"\n");
-        prompt.append("Nøgleindsigt:\n"+keyInsight+"\n");
-
-
-        prompt.append("POSTER FORMAT:\n");
-        prompt.append("For print: landscape A3\n");
-        prompt.append("On screen: scale to fit\n");
-
+        prompt.append("Generer en plakat med følgende \n\n");
         prompt.append("layout:\n");
         prompt.append(" ------------------------------------------------------------ \n");
         prompt.append("| title og subtitle          |     funny statement           |\n");
@@ -206,8 +186,7 @@ public class PosterGenerator {
         prompt.append("|___________________________________________________________ |\n");
         prompt.append("| Dare summary |    Share summary      |  Care summary        |\n");
         prompt.append("|___________________________________________________________ |\n");
-        prompt.append("|                FOOTER                                     |\n");
-        prompt.append("|___________________________________________________________ |\n");
+
         prompt.append("1. HEADER :\n");
         prompt.append("   - Titel: 'Student Vibes' "+headline+"  DO NOT INCLUDE ANY ICONS!!\n");
         prompt.append("   - Subtitle: sætning der indfanger essensen af statements\n");
@@ -215,30 +194,15 @@ public class PosterGenerator {
         prompt.append("     * Kun citatet - INGEN titel\n");
         prompt.append("     * Sort baggrund, hvid Bangers tekst (16px)\n");
         prompt.append("     * 180px bred, padding 12px, roteret 4°\n\n");
-        prompt.append("2. WORDCLOUD + BUBBLES :\n");
-        prompt.append("   \n");
-        prompt.append("   WORDCLOUD på baggrund af udsagn (center, 300×300px):\n");
-        prompt.append("   - Placeret i midten horisontalt og vertikalt\n");
-        prompt.append("   - Top 5 ord: 45-60px BOLD i centrum\n");
-        prompt.append("   - Medium (8 ord): 30-40px omkring centrum\n");
-        prompt.append("   - Rest (12 ord): 18-20px yderkant\n");
-        prompt.append("   - Total: ~25 ord\n");
-        prompt.append("   - Farver: gul/rød/grøn med sort shadow\n");
-        prompt.append("   - Tæt pakket, roterede ord\n");
-        prompt.append("   - Top ord placeres i centrum af skyen\n");
-        prompt.append("   - mere bred end høj, bubler må gerne dække ord i periferien\n");
-        prompt.append("   \n");
-        prompt.append("   SPEECH BUBBLES rundt om wordcloud(12-14 stykker TOTAL):\n");
-        prompt.append("   - Cluster lignende udsagn sammen\n");
-        prompt.append("   - Hver bubble repræsenterer 2-4 originale udsagn\n");
-        prompt.append("   - Skriv sammenfattende udsagn der dækker temaet\n");
+        prompt.append("2. WORDCLOUD omgivet af udvalgte repræsentative statements placeret i talebobler :\n");
         prompt.append("   - Eksempel: I stedet for 3 bubbles om \"mod til at fejle\", lav ÉN:\n");
         prompt.append("     \"Studerende ønsker et miljø hvor man tør at fejle \"\n");
+        prompt.append("   \n statements: ");
+        for (int i = 0; i < statements.size(); i++) {
+            prompt.append((i + 1)).append(". ").append(statements.get(i)).append("\n");
+        }
         prompt.append("   \n");
-        prompt.append("   Bubble placering (3×3 grid omkring wordcloud):\n");
-        prompt.append("   - Top: 4-5 bubbles\n");
-        prompt.append("   - Sides: 8-10 bubbles hver side\n");
-        prompt.append("   - Bottom: 0 bubbles\n");
+
         prompt.append("   - Hver bubble:\n");
         prompt.append("     * Hvid baggrund, sort 2px border, border-radius 8px\n");
         prompt.append("     * Permanent Marker, 12px\n");
@@ -256,30 +220,14 @@ public class PosterGenerator {
         prompt.append("   - Background: #f9fafb\n");
         prompt.append("   - Padding: 20px\n");
         prompt.append("   - Line-height: 1.6\n");
-        prompt.append("3. KEY INSIGHT (height: fit to content):\n");
-        prompt.append("   - Gul baggrund (#fef3c7)\n");
-        prompt.append("   - Orange border-left (4px, #f59e0b)\n");
-        prompt.append("   - Titel: \"💡 Nøgleindsigt\" (Permanent Marker, 20px)\n");
-        prompt.append("   - 2-3 sætninger om vigtigste observation\n");
-        prompt.append("   - Padding: 20px\n");
-        prompt.append("   - Line-height: 1.6\n\n");
-        prompt.append("   \n");
         prompt.append("4.  3 KATEGORI KOLONNER (dare, share, care)):\n");
         prompt.append("   - Side-by-side, equal width\n");
         prompt.append("   - Hver kolonne:\n");
-        prompt.append("     * Emoji + kategori navn \n");
+        prompt.append("     * Kategori navn \n");
         prompt.append("     * Farvet top-border (4px)\n");
         prompt.append("     * Background hvid\n");
-        prompt.append("     * Padding: 15px\n\n");
+        prompt.append("     * Padding: 10px\n\n");
         prompt.append("   \n");
-        prompt.append("5. FOOTER (20px høj):\n");
-        prompt.append("   - Full-width\n");
-        prompt.append("   - Text: 'This poster was automatically generated using AI analysis of student feedback • [dagens dato]'\n");
-        prompt.append("   - Font-size: 10px\n");
-        prompt.append("   - Color: #999\n");
-        prompt.append("   - Text-align: center\n");
-        prompt.append("   - Border-top: 1px solid #eee\n");
-        prompt.append("   - Padding: 5px 0\n\n");
         prompt.append("OUTPUT:\n");
         prompt.append("Returner KUN komplet HTML.\n");
         prompt.append("- Start med <!DOCTYPE html>\n");
