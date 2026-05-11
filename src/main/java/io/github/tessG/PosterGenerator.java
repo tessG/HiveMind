@@ -158,6 +158,15 @@ public class PosterGenerator {
         StringBuilder prompt = new StringBuilder();
         prompt.append("Generer en plakat med følgende \n\n");
         prompt.append("Make it good for both screen and for print (A3)\n");
+        prompt.append("COLOUR PALETTE - use only these colours (do NOT use purple, orange, or yellow accents):\n");
+        prompt.append("  - Deep navy: #1B3A5C\n");
+        prompt.append("  - Teal accent: #4AB5BE\n");
+        prompt.append("  - Sky light (backgrounds, gradients): #E0F4F7\n");
+        prompt.append("  - Sky medium: #87CEEB\n");
+        prompt.append("  - Wordcloud background: linear-gradient(135deg, #E0F4F7 0%, #87CEEB 100%)\n");
+        prompt.append("  - Key insight box: linear-gradient(135deg, #E0F4F7 0%, #B8DDE8 100%), border #4AB5BE, text #1B3A5C\n");
+        prompt.append("  - Dare category keeps #dc2626 (red), Share keeps #2563eb (blue), Care keeps #16a34a (green)\n");
+        prompt.append("  - Backgrounds stay white or #f9fafb\n\n");
         prompt.append("layout:\n");
         prompt.append(" ------------------------------------------------------------ \n");
         prompt.append("| title og subtitle          |     funny statement           |\n");

@@ -338,9 +338,8 @@ public class WebController {
                     
                 
                         <ol class="steps">
-                            <li> Vælg mellem at analysere data direkte fra et Padlet board eller export upload en CSV fil (header[Category,Statement]) </li>
-                            <li> Vent mens data bliver analyseret (10-30 sek.) </li>
-                            <li> Preview poster - eller print og hæng op </li>
+                            <li> De studerendes svar i en delphi evaluering eller lignende, analyseres og opsummeres med AI, som finder også finder spændinger og trends i det de studerende siger.  </li>
+                            <li> Vis opsummeringen på skærmen  - eller print og hæng op i klassen. </li>
                         </ol>
         
             
