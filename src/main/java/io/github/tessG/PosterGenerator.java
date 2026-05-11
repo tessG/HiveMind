@@ -54,7 +54,7 @@ public class PosterGenerator {
         
         // Similarity Graph
         html.append("<div class=\"similarity-graph\">\n");
-        html.append("<h2>🔗 Forbindelser mellem udsagn</h2>\n");
+        html.append("<h2>Svar</h2>\n");
         html.append("<svg id=\"similarityGraph\" width=\"1200\" height=\"1080\"></svg>\n");
         html.append("<div class=\"connections-info\">").append(edges.size()).append(" forbindelser mellem ").append(nodes.size()).append(" udsagn</div>\n");
         html.append("</div>\n");
@@ -378,22 +378,37 @@ public class PosterGenerator {
 "const svgW = parseInt(simSvg.getAttribute('width'));\n" +
 "const svgH = parseInt(simSvg.getAttribute('height'));\n" +
 "const tailH = 18;\n" +
-"const n = similarityData.nodes.length;\n" +
-"const cols = Math.ceil(Math.sqrt(n * svgW / svgH));\n" +
-"const rows = Math.ceil(n / cols);\n" +
-"const cellW = svgW / cols;\n" +
-"const cellH = svgH / rows;\n" +
-"const gridPos = Array.from({length: n}, (_, i) => ({col: i % cols, row: Math.floor(i / cols)}));\n" +
-"for (let i = gridPos.length - 1; i > 0; i--) {\n" +
-"    const j = Math.floor(Math.random() * (i + 1));\n" +
-"    [gridPos[i], gridPos[j]] = [gridPos[j], gridPos[i]];\n" +
-"}\n" +
-"similarityData.nodes.forEach((node, i) => {\n" +
-"    const {col, row} = gridPos[i];\n" +
-"    const jitX = (cellW - node.width) * 0.25 * (Math.random() - 0.5);\n" +
-"    const jitY = (cellH - node.height - tailH) * 0.25 * (Math.random() - 0.5);\n" +
-"    node.x = Math.max(4, Math.min(svgW - node.width - 4, col * cellW + (cellW - node.width) / 2 + jitX));\n" +
-"    node.y = Math.max(4, Math.min(svgH - node.height - tailH - 4, row * cellH + (cellH - node.height - tailH) / 2 + jitY));\n" +
+"const pad = 8;\n" +
+"const zoneOrder = ['keep', 'stop', 'start'];\n" +
+"const zones = { keep: [], stop: [], start: [] };\n" +
+"similarityData.nodes.forEach(node => {\n" +
+"    const c = node.category.toLowerCase();\n" +
+"    if (c.includes('keep')) zones.keep.push(node);\n" +
+"    else if (c.includes('stop')) zones.stop.push(node);\n" +
+"    else zones.start.push(node);\n" +
+"});\n" +
+"const zoneW = svgW / 3;\n" +
+"zoneOrder.forEach((key, zi) => {\n" +
+"    const group = zones[key];\n" +
+"    const n = group.length;\n" +
+"    if (!n) return;\n" +
+"    const cols = Math.max(1, Math.ceil(Math.sqrt(n * zoneW / svgH)));\n" +
+"    const rows = Math.ceil(n / cols);\n" +
+"    const cellW = zoneW / cols;\n" +
+"    const cellH = svgH / rows;\n" +
+"    const gridPos = Array.from({length: n}, (_, i) => ({col: i % cols, row: Math.floor(i / cols)}));\n" +
+"    for (let i = gridPos.length - 1; i > 0; i--) {\n" +
+"        const j = Math.floor(Math.random() * (i + 1));\n" +
+"        [gridPos[i], gridPos[j]] = [gridPos[j], gridPos[i]];\n" +
+"    }\n" +
+"    group.forEach((node, i) => {\n" +
+"        const {col, row} = gridPos[i];\n" +
+"        const zoneX = zi * zoneW;\n" +
+"        const jitX = (cellW - node.width) * 0.25 * (Math.random() - 0.5);\n" +
+"        const jitY = (cellH - node.height - tailH) * 0.25 * (Math.random() - 0.5);\n" +
+"        node.x = Math.max(zoneX + pad, Math.min(zoneX + zoneW - node.width - pad, zoneX + col * cellW + (cellW - node.width) / 2 + jitX));\n" +
+"        node.y = Math.max(pad, Math.min(svgH - node.height - tailH - pad, row * cellH + (cellH - node.height - tailH) / 2 + jitY));\n" +
+"    });\n" +
 "});\n" +
 "// Draw edges\n" +
                 "        similarityData.edges.forEach(edge => {\n" +
@@ -571,22 +586,6 @@ public class PosterGenerator {
                 "            contraSvg.appendChild(rightG);\n" +
                 "        });\n" +
                 "        \n" +
-                "        // Category labels for similarity graph\n" +
-                "        const labels = [\n" +
-                "            { text: '✅ KEEP DOING', x: 200, y: 55, color: '#48bb78' },\n" +
-                "            { text: '⭐ START DOING', x: 990, y: 55, color: '#4AB5BE' },\n" +
-                "            { text: '🛑 STOP DOING', x: 600, y: 375, color: '#f56565' }\n" +
-                "        ];\n" +
-                "        labels.forEach(label => {\n" +
-                "            const text = document.createElementNS(ns, 'text');\n" +
-                "            text.setAttribute('class', 'category-label');\n" +
-                "            text.setAttribute('x', label.x);\n" +
-                "            text.setAttribute('y', label.y);\n" +
-                "            text.setAttribute('fill', label.color);\n" +
-                "            text.setAttribute('text-anchor', 'middle');\n" +
-                "            text.textContent = label.text;\n" +
-                "            simSvg.appendChild(text);\n" +
-                "        });\n" +
 
 
 
