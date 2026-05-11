@@ -101,38 +101,66 @@ public class WebController {
                     opacity: 0.95;
                     letter-spacing: 0.3px;
                 }
-                .cards-row {
-                    display: flex;
-                    gap: 25px;
-                    align-items: stretch;
-                    margin-bottom: 25px;
-                }
-
                 .card {
-                    flex: 1;
                     background: white;
                     border-radius: 16px;
                     padding: 35px;
+                    margin-bottom: 25px;
                     box-shadow: 0 4px 18px rgba(0,0,0,0.08);
                     transition: transform 0.2s, box-shadow 0.2s;
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .card form {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .card form button {
-                    margin-top: auto;
-                    padding-top: 25px;
                 }
 
                 .card:hover {
-                    transform: translateY(-4px);
+                    transform: translateY(-2px);
                     box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+                }
+
+                .source-toggle {
+                    display: flex;
+                    background: #f0f4f8;
+                    border-radius: 10px;
+                    padding: 4px;
+                    margin: 20px 0;
+                    gap: 4px;
+                }
+
+                .source-tab {
+                    flex: 1;
+                    width: auto;
+                    background: transparent;
+                    color: #718096;
+                    padding: 10px 16px;
+                    border-radius: 7px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    margin-top: 0;
+                    letter-spacing: 0;
+                    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+                }
+
+                .source-tab:hover {
+                    transform: none;
+                    box-shadow: none;
+                    color: #4a5568;
+                }
+
+                .source-tab.active {
+                    background: white;
+                    color: #1B3A5C;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                }
+
+                .source-tab.active:hover {
+                    transform: none;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                }
+
+                .source-section {
+                    margin-top: 4px;
+                }
+
+                .submit-btn {
+                    margin-top: 25px;
                 }
                 
                 .card-header {
@@ -398,10 +426,6 @@ public class WebController {
                         font-size: 42px;
                     }
 
-                    .cards-row {
-                        flex-direction: column;
-                    }
-
                     .card {
                         padding: 25px;
                     }
@@ -433,6 +457,8 @@ public class WebController {
             
                 </div>
 
+                
+
                 <div class="demo-section">
                     <p class="demo-label">👀 Prøv med eksempeldata</p>
                     <div class="demo-buttons">
@@ -449,55 +475,44 @@ public class WebController {
                     </div>
                 </div>
 
-                <div class="cards-row">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-icon">🌐</div>
-                            <div class="card-title">
-                                <h2>Option 1: From Padlet Board</h2>
-                                <p>Connect to a live Padlet board and analyze student evaluations. (Board must be shared with tess@ek.dk)</p>
-                            </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">
+                            <h2>Generer evaluerings-plakat</h2>
+                            <p>Analysér studerendes svar og skab et visuelt overblik</p>
                         </div>
-
-                        <form id="padletForm" action="/evaluate/padlet" method="post">
-                            <label for="type">Evaluation Type</label>
-                            <select name="type" id="type" required>
-                                <option value="dare-share-care">Dare-Share-Care</option>
-                                <option value="delphi">Delphi (Keep/Stop/Start)</option>
-                            </select>
-
-                            <label for="padletId">Padlet Board ID</label>
-                            <input type="text" name="padletId" id="padletId"
-                                   placeholder="Enter Padlet board ID (e.g., abc123xyz)" required>
-
-                            <button type="submit">🚀 Generate from Padlet</button>
-                        </form>
                     </div>
 
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-icon">📄</div>
-                            <div class="card-title">
-                                <h2>Option 2: Upload CSV File</h2>
-                                <p>Upload pre-categorized evaluation data from your device</p>
-                            </div>
+                    <form id="mainForm" method="post" enctype="multipart/form-data">
+                        <input type="hidden" id="hidType" name="type">
+                        <input type="hidden" id="hidEvalType" name="evaluationType">
+
+                        <label for="evalType">Evaluationstype</label>
+                        <select id="evalType">
+                            <option value="dare-share-care">Dare-Share-Care</option>
+                            <option value="delphi">Delphi (Keep/Stop/Start)</option>
+                        </select>
+
+                        <div class="source-toggle">
+                            <button type="button" class="source-tab active" data-source="csv" onclick="setSource('csv')">📄 Upload CSV</button>
+                            <button type="button" class="source-tab" data-source="padlet" onclick="setSource('padlet')">🌐 Padlet Board</button>
                         </div>
 
-                        <form id="csvForm" action="/evaluate/csv" method="post" enctype="multipart/form-data">
-                            <label for="file">CSV File</label>
-                            <input type="file" name="file" id="file" accept=".csv" required>
+                        <div id="csvSection" class="source-section">
+                            <label for="csvFile">CSV fil</label>
+                            <input type="file" id="csvFile" name="file" accept=".csv">
+                        </div>
 
-                            <label for="csvType">Delphi Format</label>
-                            <select name="evaluationType" id="csvType">
-                                <option value="delphi">Keep/Stop/Start (3 categories)</option>
-                            </select>
+                        <div id="padletSection" class="source-section" style="display:none">
+                            <label for="padletIdInput">Padlet Board ID</label>
+                            <input type="text" id="padletIdInput" name="padletId" placeholder="f.eks. abc123xyz">
+                        </div>
 
-                            <button type="submit">📤 Generate from CSV</button>
-                        </form>
-                    </div>
+                        <button type="button" class="submit-btn" onclick="submitForm()">🚀 Generer plakat</button>
+                    </form>
                 </div>
             </div>
-            
             <!-- Loading Overlay -->
             <div id="loadingOverlay" class="loading-overlay">
                 <div class="loading-box">
@@ -513,26 +528,55 @@ public class WebController {
             </div>
             
             <script>
-                document.getElementById('padletForm').addEventListener('submit', function(e) {
-                    showLoading('Padlet');
-                });
-                
-                document.getElementById('csvForm').addEventListener('submit', function(e) {
-                    showLoading('CSV');
-                });
-                
+                let activeSource = 'csv';
+
+                function setSource(source) {
+                    activeSource = source;
+                    document.querySelectorAll('.source-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelector('.source-tab[data-source="' + source + '"]').classList.add('active');
+                    document.getElementById('csvSection').style.display = source === 'csv' ? '' : 'none';
+                    document.getElementById('padletSection').style.display = source === 'padlet' ? '' : 'none';
+                }
+
+                function submitForm() {
+                    const evalType = document.getElementById('evalType').value;
+                    const form = document.getElementById('mainForm');
+                    document.getElementById('hidType').value = evalType;
+                    document.getElementById('hidEvalType').value = evalType;
+
+                    if (activeSource === 'csv') {
+                        const fileInput = document.getElementById('csvFile');
+                        if (!fileInput.files.length) {
+                            alert('Vælg venligst en CSV fil');
+                            return;
+                        }
+                        form.action = '/evaluate/csv';
+                        showLoading('CSV');
+                        form.submit();
+                    } else {
+                        const padletId = document.getElementById('padletIdInput').value.trim();
+                        if (!padletId) {
+                            alert('Indtast venligst et Padlet board ID');
+                            return;
+                        }
+                        form.action = '/evaluate/padlet';
+                        showLoading('Padlet');
+                        form.submit();
+                    }
+                }
+
                 function showLoading(type) {
                     const overlay = document.getElementById('loadingOverlay');
                     const log = document.getElementById('statusLog');
                     overlay.classList.add('active');
-                    
+
                     const messages = type === 'Padlet'
                         ? [
-                            'Connecting to Padlet board...',
-                            'Fetching student responses...',
-                            'Analyzing with AI...',
-                            'Generating visual poster...',
-                            'Almost ready...'
+                            'Forbinder til Padlet board...',
+                            'Henter studerendes svar...',
+                            'Analyserer med AI...',
+                            'Genererer plakat...',
+                            'Snart klar...'
                           ]
                         : type === 'Demo'
                         ? [
@@ -543,16 +587,15 @@ public class WebController {
                             'Snart klar...'
                           ]
                         : [
-                            'Reading CSV file...',
-                            'Parsing evaluation data...',
-                            'Calculating similarities...',
-                            'Building network graph...',
-                            'Generating poster...',
-                            'Finalizing...'
+                            'Læser CSV fil...',
+                            'Analyserer udsagn med AI...',
+                            'Finder mønstre og spændinger...',
+                            'Genererer plakat...',
+                            'Snart klar...'
                           ];
-                    
-                    log.innerHTML = '<div class="status-message">Starting ' + type + ' analysis...</div>';
-                    
+
+                    log.innerHTML = '<div class="status-message">Starter analyse...</div>';
+
                     let index = 0;
                     const interval = setInterval(() => {
                         if (index < messages.length) {

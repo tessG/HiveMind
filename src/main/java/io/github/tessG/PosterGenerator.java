@@ -365,7 +365,37 @@ public class PosterGenerator {
 "const ns = 'http://www.w3.org/2000/svg';\n" +
 "const simSvg = document.getElementById('similarityGraph');\n" +
 "const contraSvg = document.getElementById('contradictionGraph');\n" +
- "// Draw edges\n" +
+"function makeBubble(x, y, w, h) {\n" +
+"    const r = 8;\n" +
+"    return `M ${x+r} ${y} H ${x+w-r} Q ${x+w} ${y} ${x+w} ${y+r} V ${y+h-r} Q ${x+w} ${y+h} ${x+w-r} ${y+h} H ${x+28} L ${x+16} ${y+h+14} L ${x+12} ${y+h} H ${x+r} Q ${x} ${y+h} ${x} ${y+h-r} V ${y+r} Q ${x} ${y} ${x+r} ${y} Z`;\n" +
+"}\n" +
+"function catStroke(cat) {\n" +
+"    const c = cat.toLowerCase();\n" +
+"    if (c.includes('keep')) return '#48bb78';\n" +
+"    if (c.includes('stop')) return '#f56565';\n" +
+"    return '#4AB5BE';\n" +
+"}\n" +
+"const svgW = parseInt(simSvg.getAttribute('width'));\n" +
+"const svgH = parseInt(simSvg.getAttribute('height'));\n" +
+"const tailH = 18;\n" +
+"const n = similarityData.nodes.length;\n" +
+"const cols = Math.ceil(Math.sqrt(n * svgW / svgH));\n" +
+"const rows = Math.ceil(n / cols);\n" +
+"const cellW = svgW / cols;\n" +
+"const cellH = svgH / rows;\n" +
+"const gridPos = Array.from({length: n}, (_, i) => ({col: i % cols, row: Math.floor(i / cols)}));\n" +
+"for (let i = gridPos.length - 1; i > 0; i--) {\n" +
+"    const j = Math.floor(Math.random() * (i + 1));\n" +
+"    [gridPos[i], gridPos[j]] = [gridPos[j], gridPos[i]];\n" +
+"}\n" +
+"similarityData.nodes.forEach((node, i) => {\n" +
+"    const {col, row} = gridPos[i];\n" +
+"    const jitX = (cellW - node.width) * 0.25 * (Math.random() - 0.5);\n" +
+"    const jitY = (cellH - node.height - tailH) * 0.25 * (Math.random() - 0.5);\n" +
+"    node.x = Math.max(4, Math.min(svgW - node.width - 4, col * cellW + (cellW - node.width) / 2 + jitX));\n" +
+"    node.y = Math.max(4, Math.min(svgH - node.height - tailH - 4, row * cellH + (cellH - node.height - tailH) / 2 + jitY));\n" +
+"});\n" +
+"// Draw edges\n" +
                 "        similarityData.edges.forEach(edge => {\n" +
                 "            const source = similarityData.nodes[edge.source];\n" +
                 "            const target = similarityData.nodes[edge.target];\n" +
@@ -378,18 +408,19 @@ public class PosterGenerator {
                 "            simSvg.appendChild(line);\n" +
                 "        });\n" +
                 "        \n" +
-                "        // Draw nodes\n" +
+                "        // Draw nodes as speech bubbles\n" +
                 "        similarityData.nodes.forEach(node => {\n" +
                 "            const g = document.createElementNS(ns, 'g');\n" +
-                "            const rect = document.createElementNS(ns, 'rect');\n" +
-                "            rect.setAttribute('class', `node-box ${node.category.toLowerCase().replace(' ', '-')}`);\n" +
-                "            rect.setAttribute('x', node.x);\n" +
-                "            rect.setAttribute('y', node.y);\n" +
-                "            rect.setAttribute('width', node.width);\n" +
-                "            rect.setAttribute('height', node.height);\n" +
-                "            rect.setAttribute('rx', 4);\n" +
-                "            g.appendChild(rect);\n" +
-                "            \n" +
+                "            const angle = (Math.random() * 14 - 7).toFixed(1);\n" +
+                "            g.setAttribute('transform', `rotate(${angle}, ${node.x + node.width/2}, ${node.y + node.height/2})`);\n" +
+                "            const bubble = document.createElementNS(ns, 'path');\n" +
+                "            bubble.setAttribute('d', makeBubble(node.x, node.y, node.width, node.height));\n" +
+                "            bubble.setAttribute('fill', 'white');\n" +
+                "            bubble.setAttribute('stroke', catStroke(node.category));\n" +
+                "            bubble.setAttribute('stroke-width', '2.5');\n" +
+                "            bubble.setAttribute('stroke-linejoin', 'round');\n" +
+                "            bubble.style.cursor = 'pointer';\n" +
+                "            g.appendChild(bubble);\n" +
                 "            const lineH = 22;\n" +
                 "            const maxCharsPerLine = Math.floor(node.width / 10);\n" +
                 "            const words = node.text.split(' ');\n" +
