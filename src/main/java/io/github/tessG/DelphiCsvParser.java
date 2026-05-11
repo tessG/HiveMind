@@ -70,6 +70,29 @@ public class DelphiCsvParser {
     }
     
     /**
+     * Parse Padlet CSV export for DSC (Dare/Share/Care) boards.
+     * Column layout: Post number, Subject, Body, Post color, Author, ...
+     * Returns a flat list of statement texts (Body column).
+     */
+    public List<String> parseDscExportCsv(String filepath) {
+        List<String> statements = new ArrayList<>();
+
+        try (CSVReader reader = new CSVReader(new FileReader(filepath))) {
+            List<String[]> rows = reader.readAll();
+            for (int i = 1; i < rows.size(); i++) {
+                String[] row = rows.get(i);
+                if (row.length >= 3 && !row[2].trim().isEmpty()) {
+                    statements.add(row[2].trim());
+                }
+            }
+        } catch (IOException | CsvException e) {
+            System.err.println("Error parsing DSC export CSV: " + e.getMessage());
+        }
+
+        return statements;
+    }
+
+    /**
      * Print summary of parsed statements
      */
     public void printSummary(Map<String, List<Statement>> categorized) {

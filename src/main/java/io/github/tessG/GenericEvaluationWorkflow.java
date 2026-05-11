@@ -46,6 +46,24 @@ public class GenericEvaluationWorkflow {
         return runDelphiPipeline(categorized, evaluationType);
     }
 
+    public String executeDSCFromCsv(String csvPath) throws Exception {
+        System.out.println("🎨 Starting DSC workflow from CSV export");
+
+        DelphiCsvParser parser = new DelphiCsvParser();
+        List<String> statements = parser.parseDscExportCsv(csvPath);
+        System.out.println("✅ Retrieved " + statements.size() + " statements");
+
+        EvaluationConfig config = EvaluationConfigFactory.getConfig("dare-share-care");
+
+        System.out.println("🤖 Analyzing with Claude...");
+        Map<String, String> analysis = ClaudeAnalysisService.analyzeSummaryAndInsights(statements);
+
+        System.out.println("🎨 Generating DSC poster...");
+        String htmlPoster = PosterGenerator.generateDSCPoster(statements, config, analysis);
+
+        return savePoster(htmlPoster, "dare-share-care");
+    }
+
     public String executeDelphiFromCsv(String csvPath, String evaluationType) throws Exception {
         System.out.println("📄 Starting Delphi workflow from CSV");
 

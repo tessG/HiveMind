@@ -335,6 +335,64 @@ public class WebController {
                     font-size: 16px;
                 }
                 
+                .demo-section {
+                    background: linear-gradient(135deg, #E0F4F7 0%, #B8DDE8 100%);
+                    border-radius: 12px;
+                    padding: 18px 22px;
+                    margin-bottom: 25px;
+                    display: flex;
+                    align-items: center;
+                    gap: 18px;
+                }
+
+                .demo-label {
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #1B3A5C;
+                    white-space: nowrap;
+                    margin: 0;
+                }
+
+                .demo-buttons {
+                    display: flex;
+                    gap: 12px;
+                    flex: 1;
+                }
+
+                .demo-btn {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    background: white;
+                    border-radius: 10px;
+                    padding: 12px 16px;
+                    text-decoration: none;
+                    color: #1B3A5C;
+                    font-weight: 600;
+                    font-size: 14px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    cursor: pointer;
+                }
+
+                .demo-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(27,58,92,0.14);
+                }
+
+                .demo-icon {
+                    font-size: 22px;
+                    margin-bottom: 4px;
+                }
+
+                .demo-sub {
+                    font-size: 11px;
+                    font-weight: 400;
+                    color: #4AB5BE;
+                    margin-top: 2px;
+                }
+
                 @media (max-width: 768px) {
                     .brand-name {
                         font-size: 42px;
@@ -346,6 +404,11 @@ public class WebController {
 
                     .card {
                         padding: 25px;
+                    }
+
+                    .demo-section {
+                        flex-direction: column;
+                        align-items: flex-start;
                     }
                 }
             </style>
@@ -369,9 +432,23 @@ public class WebController {
         
             
                 </div>
-                
-             
-                
+
+                <div class="demo-section">
+                    <p class="demo-label">👀 Prøv med eksempeldata</p>
+                    <div class="demo-buttons">
+                        <a href="/demo/delphi" class="demo-btn" onclick="showLoading('Demo')">
+                            <span class="demo-icon">📊</span>
+                            <span>Delphi</span>
+                            <span class="demo-sub">Keep / Stop / Start</span>
+                        </a>
+                        <a href="/demo/dsc" class="demo-btn" onclick="showLoading('Demo')">
+                            <span class="demo-icon">💬</span>
+                            <span>Dare Share Care</span>
+                            <span class="demo-sub">3 kategorier</span>
+                        </a>
+                    </div>
+                </div>
+
                 <div class="cards-row">
                     <div class="card">
                         <div class="card-header">
@@ -387,7 +464,6 @@ public class WebController {
                             <select name="type" id="type" required>
                                 <option value="dare-share-care">Dare-Share-Care</option>
                                 <option value="delphi">Delphi (Keep/Stop/Start)</option>
-                                <option value="delphi-4">Delphi (4 categories)</option>
                             </select>
 
                             <label for="padletId">Padlet Board ID</label>
@@ -414,7 +490,6 @@ public class WebController {
                             <label for="csvType">Delphi Format</label>
                             <select name="evaluationType" id="csvType">
                                 <option value="delphi">Keep/Stop/Start (3 categories)</option>
-                                <option value="delphi-4">4 categories</option>
                             </select>
 
                             <button type="submit">📤 Generate from CSV</button>
@@ -451,13 +526,21 @@ public class WebController {
                     const log = document.getElementById('statusLog');
                     overlay.classList.add('active');
                     
-                    const messages = type === 'Padlet' 
+                    const messages = type === 'Padlet'
                         ? [
                             'Connecting to Padlet board...',
                             'Fetching student responses...',
                             'Analyzing with AI...',
                             'Generating visual poster...',
                             'Almost ready...'
+                          ]
+                        : type === 'Demo'
+                        ? [
+                            'Henter eksempeldata...',
+                            'Analyserer udsagn med AI...',
+                            'Finder mønstre og spændinger...',
+                            'Genererer plakat...',
+                            'Snart klar...'
                           ]
                         : [
                             'Reading CSV file...',
@@ -571,6 +654,44 @@ public class WebController {
             System.err.println("❌ Error processing CSV: " + e.getMessage());
             e.printStackTrace();
             return generateErrorPage("Error processing CSV: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/demo/{type}")
+    public String demo(@PathVariable String type) {
+        try {
+            boolean isDsc = type.equals("dsc");
+            Path csvPath = isDsc
+                    ? Paths.get("data/dscposts.csv")
+                    : Paths.get("data/delphiposts.csv");
+            String evaluationType = isDsc ? "dare-share-care" : "delphi";
+
+            byte[] fileBytes = Files.readAllBytes(csvPath);
+            String hash = computeSha256(fileBytes);
+            Path cacheDir = Paths.get("cache");
+            Files.createDirectories(cacheDir);
+            Path cachedPoster = cacheDir.resolve(hash + "-" + evaluationType + ".html");
+
+            if (Files.exists(cachedPoster)) {
+                System.out.println("✅ Demo cache hit for " + type);
+                return generatePreviewPage(cachedPoster.toString());
+            }
+
+            System.out.println("🔄 Demo cache miss — processing " + type);
+            GenericEvaluationWorkflow workflow = new GenericEvaluationWorkflow();
+            String posterPath = isDsc
+                    ? workflow.executeDSCFromCsv(csvPath.toString())
+                    : workflow.executeDelphiFromCsv(csvPath.toString(), evaluationType);
+
+            Files.copy(Paths.get(posterPath), cachedPoster);
+            System.out.println("💾 Demo cached as: " + cachedPoster);
+
+            return generatePreviewPage(posterPath);
+
+        } catch (Exception e) {
+            System.err.println("❌ Demo error: " + e.getMessage());
+            e.printStackTrace();
+            return generateErrorPage("Demo error: " + e.getMessage());
         }
     }
 
