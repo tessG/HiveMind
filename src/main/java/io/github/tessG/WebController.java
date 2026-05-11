@@ -425,10 +425,10 @@ public class WebController {
                     <p class="tagline">Alt dét studerende siger</p>
                     
                 
-                        <ol class="steps">
-                            <li> De studerendes svar i en delphi evaluering eller lignende, analyseres og opsummeres med AI, som finder også finder spændinger og trends i det de studerende siger.  </li>
+                        <ul class="steps">
+                            <li> De studerendes svar i en delphi evaluering eller lignende, analyseres og opsummeres med AI, som også finder spændinger og trends i det de studerende siger.  </li>
                             <li> Vis opsummeringen på skærmen  - eller print og hæng op i klassen. </li>
-                        </ol>
+                        </ul>
         
             
                 </div>
