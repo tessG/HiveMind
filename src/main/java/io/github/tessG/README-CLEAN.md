@@ -70,7 +70,6 @@ Drop in `src/main/java/io/github/tessG/`:
 - EvaluationConfig.java
 - EvaluationInsights.java
 - GenericEvaluationWorkflow.java
-- GenericMiroBoardBuilder.java (not used, but keep it)
 
 ### One Small Edit Needed
 

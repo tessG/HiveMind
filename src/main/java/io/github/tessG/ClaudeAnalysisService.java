@@ -9,6 +9,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 
+import java.nio.file.*;
+import java.security.MessageDigest;
 import java.util.*;
 
 /**
@@ -16,51 +18,89 @@ import java.util.*;
  * Shared by both Delphi and DSC workflows
  */
 public class ClaudeAnalysisService {
-    
+
+    private static final String MODEL = "claude-sonnet-4-5-20250929";
+    private static final String CACHE_DIR = "cache";
+
+    private static String computeCacheKey(String prefix, List<String> items) throws Exception {
+        List<String> sorted = new ArrayList<>(items);
+        Collections.sort(sorted);
+        String input = prefix + ":" + String.join("|", sorted);
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(input.getBytes("UTF-8"));
+        StringBuilder hex = new StringBuilder();
+        for (byte b : hash) hex.append(String.format("%02x", b));
+        return hex.toString();
+    }
+
+    private static String loadCache(String key) {
+        try {
+            Path f = Paths.get(CACHE_DIR, key + ".json");
+            if (Files.exists(f)) {
+                System.out.println("📦 Cache hit: " + key.substring(0, 8) + "...");
+                return Files.readString(f);
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private static void saveCache(String key, String value) {
+        try {
+            Files.createDirectories(Paths.get(CACHE_DIR));
+            Files.writeString(Paths.get(CACHE_DIR, key + ".json"), value);
+        } catch (Exception e) {
+            System.err.println("Cache write failed: " + e.getMessage());
+        }
+    }
+
     /**
      * Analyze statements for summary, headline, key insight, funny statement
      * SHARED by both Delphi and DSC
      */
     public static Map<String, String> analyzeSummaryAndInsights(List<String> statements) throws Exception {
-        AnthropicClient client = AnthropicOkHttpClient.fromEnv();
-        
-        StringBuilder prompt = new StringBuilder();
-        prompt.append("Analyser disse student-evalueringer og giv mig:\n\n");
-        prompt.append("Udsagn:\n");
-        for (int i = 0; i < statements.size(); i++) {
-            prompt.append((i + 1)).append(". ").append(statements.get(i)).append("\n");
+        String cacheKey = computeCacheKey("analysis", statements);
+        String cached = loadCache(cacheKey);
+
+        String response;
+        if (cached != null) {
+            response = cached;
+        } else {
+            AnthropicClient client = AnthropicOkHttpClient.fromEnv();
+            StringBuilder prompt = new StringBuilder();
+            prompt.append("Analyser disse student-evalueringer og giv mig:\n\n");
+            prompt.append("Udsagn:\n");
+            for (int i = 0; i < statements.size(); i++) {
+                prompt.append((i + 1)).append(". ").append(statements.get(i)).append("\n");
+            }
+            prompt.append("\nReturner KUN valid JSON (ingen forklaring, ingen markdown):\n");
+            prompt.append("{\n");
+            prompt.append("  \"headline\": \"En kort sætning (8-12 ord) der fanger essensen af feedbacken\",\n");
+            prompt.append("  \"summary\": \"2-3 sætninger der opsummerer hovedtendenserne\",\n");
+            prompt.append("  \"keyInsight\": \"En vigtig indsigt eller observation\",\n");
+            prompt.append("  \"funnyStatement\": \"Det mest kontroversielle, sjove eller provokerende udsagn fra listen\"\n");
+            prompt.append("}\n\n");
+            prompt.append("Start direkte med { og slut med }");
+
+            MessageCreateParams params = MessageCreateParams.builder()
+                .model(MODEL)
+                .maxTokens(1000)
+                .addUserMessage(prompt.toString())
+                .build();
+
+            Message message = client.messages().create(params);
+            response = cleanJsonResponse(String.valueOf(message.content().get(0).text()));
+            saveCache(cacheKey, response);
         }
-        prompt.append("\nReturner KUN valid JSON (ingen forklaring, ingen markdown):\n");
-        prompt.append("{\n");
-        prompt.append("  \"headline\": \"En kort sætning (8-12 ord) der fanger essensen af feedbacken\",\n");
-        prompt.append("  \"summary\": \"2-3 sætninger der opsummerer hovedtendenserne\",\n");
-        prompt.append("  \"keyInsight\": \"En vigtig indsigt eller observation\",\n");
-        prompt.append("  \"funnyStatement\": \"Det mest kontroversielle, sjove eller provokerende udsagn fra listen\"\n");
-        prompt.append("}\n\n");
-        prompt.append("Start direkte med { og slut med }");
-        
-        MessageCreateParams params = MessageCreateParams.builder()
-            .model("claude-sonnet-4-5-20250929")
-            .maxTokens(1000)
-            .addUserMessage(prompt.toString())
-            .build();
-        
-        Message message = client.messages().create(params);
-        String response = String.valueOf(message.content().get(0).text());
-        
-        // Clean response
-        response = cleanJsonResponse(response);
-        
-        // Parse JSON
+
         Gson gson = new GsonBuilder().setLenient().create();
         JsonObject json = gson.fromJson(response, JsonObject.class);
-        
+
         Map<String, String> analysis = new HashMap<>();
         analysis.put("headline", json.get("headline").getAsString());
         analysis.put("summary", json.get("summary").getAsString());
         analysis.put("keyInsight", json.get("keyInsight").getAsString());
         analysis.put("funnyStatement", json.get("funnyStatement").getAsString());
-        
+
         return analysis;
     }
     
@@ -70,69 +110,63 @@ public class ClaudeAnalysisService {
      */
     public static List<Map<String, Object>> detectContradictions(
             Map<String, List<Statement>> categorized) throws Exception {
-        
-        AnthropicClient client = AnthropicOkHttpClient.fromEnv();
-        
-        StringBuilder prompt = new StringBuilder();
-        prompt.append("Analyser disse student-evalueringer for MODSÆTNINGER og SPÆNDINGER.\n\n");
-        prompt.append("Find udsagn der trækker i modsatte retninger eller skaber dilemmaer.\n\n");
-        
-        prompt.append("Udsagn:\n");
-        int counter = 1;
-        for (Map.Entry<String, List<Statement>> entry : categorized.entrySet()) {
-            for (Statement stmt : entry.getValue()) {
-                prompt.append(counter++).append(". ").append(stmt.getText()).append("\n");
-            }
+
+        List<String> allTexts = new ArrayList<>();
+        for (List<Statement> stmts : categorized.values())
+            for (Statement s : stmts) allTexts.add(s.getText());
+
+        String cacheKey = computeCacheKey("contradictions", allTexts);
+        String cached = loadCache(cacheKey);
+
+        String response;
+        if (cached != null) {
+            response = cached;
+        } else {
+            AnthropicClient client = AnthropicOkHttpClient.fromEnv();
+            StringBuilder prompt = new StringBuilder();
+            prompt.append("Analyser disse student-evalueringer for MODSÆTNINGER og SPÆNDINGER.\n\n");
+            prompt.append("Find udsagn der trækker i modsatte retninger eller skaber dilemmaer.\n\n");
+            prompt.append("Udsagn:\n");
+            int counter = 1;
+            for (Map.Entry<String, List<Statement>> entry : categorized.entrySet())
+                for (Statement stmt : entry.getValue())
+                    prompt.append(counter++).append(". ").append(stmt.getText()).append("\n");
+
+            prompt.append("\nFind 8-10 modsætningspar hvor:\n");
+            prompt.append("- Udsagnene trækker i forskellige retninger\n");
+            prompt.append("- De skaber undervisningsmæssige dilemmaer\n");
+            prompt.append("- De repræsenterer fundamentale spændinger\n\n");
+            prompt.append("Returner KUN valid JSON (ingen forklaring, ingen markdown):\n");
+            prompt.append("{\"contradictions\":[{\"statement1\":\"...\",\"statement2\":\"...\",\"tension\":0.85,\"theme\":\"...\",\"explanation\":\"...\"}]}\n\n");
+            prompt.append("Start direkte med { og slut med }");
+
+            MessageCreateParams params = MessageCreateParams.builder()
+                .model(MODEL)
+                .maxTokens(2000)
+                .addUserMessage(prompt.toString())
+                .build();
+
+            Message message = client.messages().create(params);
+            response = cleanJsonResponse(String.valueOf(message.content().get(0).text()));
+            saveCache(cacheKey, response);
         }
-        
-        prompt.append("\nFind 5-8 modsætningspar hvor:\n");
-        prompt.append("- Udsagnene trækker i forskellige retninger\n");
-        prompt.append("- De skaber undervisningsmæssige dilemmaer\n");
-        prompt.append("- De repræsenterer fundamentale spændinger\n\n");
-        
-        prompt.append("Returner KUN valid JSON (ingen forklaring, ingen markdown):\n");
-        prompt.append("{\n");
-        prompt.append("  \"contradictions\": [\n");
-        prompt.append("    {\n");
-        prompt.append("      \"statement1\": \"Præcis tekst fra udsagn A\",\n");
-        prompt.append("      \"statement2\": \"Præcis tekst fra udsagn B\",\n");
-        prompt.append("      \"tension\": 0.85,\n");
-        prompt.append("      \"theme\": \"Kort tema-navn\",\n");
-        prompt.append("      \"explanation\": \"Kort forklaring\"\n");
-        prompt.append("    }\n");
-        prompt.append("  ]\n");
-        prompt.append("}\n\n");
-        prompt.append("Start direkte med { og slut med }");
-        
-        MessageCreateParams params = MessageCreateParams.builder()
-            .model("claude-sonnet-4-5-20250929")
-            .maxTokens(2000)
-            .addUserMessage(prompt.toString())
-            .build();
-        
-        Message message = client.messages().create(params);
-        String response = String.valueOf(message.content().get(0).text());
-        
-        response = cleanJsonResponse(response);
-        
+
         Gson gson = new GsonBuilder().setLenient().create();
         JsonObject json = gson.fromJson(response, JsonObject.class);
         JsonArray contradictionsArray = json.getAsJsonArray("contradictions");
-        
+
         List<Map<String, Object>> contradictions = new ArrayList<>();
         for (int i = 0; i < contradictionsArray.size(); i++) {
             JsonObject contra = contradictionsArray.get(i).getAsJsonObject();
-            
             Map<String, Object> contradiction = new HashMap<>();
             contradiction.put("statement1", contra.get("statement1").getAsString());
             contradiction.put("statement2", contra.get("statement2").getAsString());
             contradiction.put("tension", contra.get("tension").getAsDouble());
             contradiction.put("theme", contra.get("theme").getAsString());
             contradiction.put("explanation", contra.get("explanation").getAsString());
-            
             contradictions.add(contradiction);
         }
-        
+
         return contradictions;
     }
     
@@ -141,46 +175,44 @@ public class ClaudeAnalysisService {
      * DELPHI ONLY (but could be used for DSC too)
      */
     public static List<String> generateSuggestions(List<String> statements) throws Exception {
-        AnthropicClient client = AnthropicOkHttpClient.fromEnv();
-        
-        StringBuilder prompt = new StringBuilder();
-        prompt.append("Baseret på disse student-evalueringer, generer konkrete anbefalinger til underviserne.\n\n");
-        prompt.append("Udsagn:\n");
-        for (int i = 0; i < statements.size(); i++) {
-            prompt.append((i + 1)).append(". ").append(statements.get(i)).append("\n");
+        String cacheKey = computeCacheKey("suggestions", statements);
+        String cached = loadCache(cacheKey);
+
+        String response;
+        if (cached != null) {
+            response = cached;
+        } else {
+            AnthropicClient client = AnthropicOkHttpClient.fromEnv();
+            StringBuilder prompt = new StringBuilder();
+            prompt.append("Baseret på disse student-evalueringer, generer konkrete anbefalinger til underviserne.\n\n");
+            prompt.append("Udsagn:\n");
+            for (int i = 0; i < statements.size(); i++)
+                prompt.append((i + 1)).append(". ").append(statements.get(i)).append("\n");
+
+            prompt.append("\nGenerer 4-6 KONKRETE, HANDLINGSORIENTEREDE anbefalinger.\n\n");
+            prompt.append("Returner KUN valid JSON:\n");
+            prompt.append("{\"suggestions\":[\"Konkret anbefaling 1\",\"Konkret anbefaling 2\"]}\n\n");
+            prompt.append("Start direkte med { og slut med }");
+
+            MessageCreateParams params = MessageCreateParams.builder()
+                .model(MODEL)
+                .maxTokens(1500)
+                .addUserMessage(prompt.toString())
+                .build();
+
+            Message message = client.messages().create(params);
+            response = cleanJsonResponse(String.valueOf(message.content().get(0).text()));
+            saveCache(cacheKey, response);
         }
-        
-        prompt.append("\nGenerer 4-6 KONKRETE, HANDLINGSORIENTEREDE anbefalinger.\n\n");
-        
-        prompt.append("Returner KUN valid JSON:\n");
-        prompt.append("{\n");
-        prompt.append("  \"suggestions\": [\n");
-        prompt.append("    \"Konkret anbefaling 1\",\n");
-        prompt.append("    \"Konkret anbefaling 2\"\n");
-        prompt.append("  ]\n");
-        prompt.append("}\n\n");
-        prompt.append("Start direkte med { og slut med }");
-        
-        MessageCreateParams params = MessageCreateParams.builder()
-            .model("claude-sonnet-4-5-20250929")
-            .maxTokens(1500)
-            .addUserMessage(prompt.toString())
-            .build();
-        
-        Message message = client.messages().create(params);
-        String response = String.valueOf(message.content().get(0).text());
-        
-        response = cleanJsonResponse(response);
-        
+
         Gson gson = new GsonBuilder().setLenient().create();
         JsonObject json = gson.fromJson(response, JsonObject.class);
         JsonArray suggestionsArray = json.getAsJsonArray("suggestions");
-        
+
         List<String> suggestions = new ArrayList<>();
-        for (int i = 0; i < suggestionsArray.size(); i++) {
+        for (int i = 0; i < suggestionsArray.size(); i++)
             suggestions.add(suggestionsArray.get(i).getAsString());
-        }
-        
+
         return suggestions;
     }
     

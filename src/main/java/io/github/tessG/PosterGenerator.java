@@ -15,7 +15,9 @@ import java.util.Map;
  * Pure HTML generation - NO preview wrapper styling
  */
 public class PosterGenerator {
-    
+
+    private static final String MODEL = "claude-sonnet-4-5-20250929";
+
     /**
      * Generate Delphi A3 Landscape Dashboard
      * Dimensions: 2480px x 1754px (A3 landscape at 150ppi)
@@ -53,14 +55,14 @@ public class PosterGenerator {
         // Similarity Graph
         html.append("<div class=\"similarity-graph\">\n");
         html.append("<h2>🔗 Forbindelser mellem udsagn</h2>\n");
-        html.append("<svg id=\"similarityGraph\" width=\"1200\" height=\"800\"></svg>\n");
+        html.append("<svg id=\"similarityGraph\" width=\"1200\" height=\"1080\"></svg>\n");
         html.append("<div class=\"connections-info\">").append(edges.size()).append(" forbindelser mellem ").append(nodes.size()).append(" udsagn</div>\n");
         html.append("</div>\n");
         
         // Contradictory Graph
         html.append("<div class=\"contradictory-graph\">\n");
         html.append("<h2>⚡ Modsætninger & Spændinger</h2>\n");
-        html.append("<svg id=\"contradictionGraph\" width=\"1200\" height=\"1544\"></svg>\n");
+        html.append("<svg id=\"contradictionGraph\" width=\"1200\" height=\"1100\"></svg>\n");
         html.append("</div>\n");
         
         // Summary
@@ -85,25 +87,6 @@ public class PosterGenerator {
         return html.toString();
     }
     
-    /**
-     * Generate DSC Poster (existing format)
-     * Keep current dimensions and style
-     */
-    public static String generateDSCPoster(
-            List<Map<String, Object>> nodes,
-            List<Map<String, Object>> edges,
-            EvaluationConfig config,
-            Map<String, String> analysis) {
-        
-        // TODO: Extract from GenericEvaluationWorkflow
-        // For now, return placeholder
-        return  "<!DOCTYPE html><html><body>" +
-                "<h1>DSC Poster - To Be Implemented</h1>" +
-                "<p>Headline: " + analysis.get("headline") + "</p>" +
-                "<p>Summary: " + analysis.get("summary") + "</p>" +
-                "</body></html>";
-    }
-
     public static String generateDSCPoster(
             List<String> statements,
             EvaluationConfig config,
@@ -133,7 +116,7 @@ public class PosterGenerator {
         AnthropicClient client = AnthropicOkHttpClient.fromEnv();
 
         MessageCreateParams params = MessageCreateParams.builder()
-                .model("claude-sonnet-4-5-20250929")
+                .model(MODEL)
                 .maxTokens(8000)  // Increased for HTML generation
                 .addUserMessage(buildDSCPrompt(statements,headline,funnyStatement,summary,keyInsight, config))
                 .build();
@@ -322,9 +305,9 @@ public class PosterGenerator {
         return "<style>\n" +
 "    * { margin: 0; padding: 0; box-sizing: border-box; }\n" +
 "    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f5f5f5; }\n" +
-"    .poster-wrapper { transform: scale(0.41); transform-origin: top left; }\n" +
+"    @media screen { .poster-wrapper { zoom: 0.41; } }\n" +
 "    .poster { width: 2480px; height: 1754px; background: white; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);\n" +
-"        display: grid; grid-template-columns: 1140px 1240px; grid-template-rows: 200px 1280px 320px; gap: 20px; }\n" +
+"        display: grid; grid-template-columns: 1140px 1240px; grid-template-rows: 200px 1194px 260px; gap: 20px; }\n" +
 "    .header { grid-column: 1 / -1; grid-row: 1; display: grid; grid-template-columns: 1600px 820px; gap: 20px; align-items: center; }\n" +
 "    .title-section h1 { font-family: 'Bangers', cursive; font-size: 64px; color: #333; line-height: 1.1; margin-bottom: 10px; }\n" +
 "    .title-section .subtitle { font-size: 22px; color: #666; }\n" +
@@ -334,15 +317,15 @@ public class PosterGenerator {
 "        border-bottom: 2px solid #fff; padding-bottom: 8px; margin-bottom: 12px; letter-spacing: 2px; }\n" +
 "    .controversial-statement .quote { font-family: 'Bangers', cursive; font-size: 24px; text-align: center; line-height: 1.3; }\n" +
 "    .similarity-graph { grid-column: 1; grid-row: 2; border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; background: #fff; }\n" +
-"    .similarity-graph h2 { font-family: 'Permanent Marker', cursive; font-size: 28px; margin-bottom: 15px; color: #4299e1; }\n" +
+"    .similarity-graph h2 { font-family: 'Permanent Marker', cursive; font-size: 28px; margin-bottom: 15px; color: #4AB5BE; }\n" +
 "    .contradictory-graph { grid-column: 2; grid-row: 2; border: 2px solid #fed7d7; border-radius: 8px; padding: 20px;\n" +
 "        background: #fff; display: flex; flex-direction: column; }\n" +
 "    .contradictory-graph h2 { font-family: 'Permanent Marker', cursive; font-size: 28px; margin-bottom: 15px; color: #e53e3e; }\n" +
 "    .summary { grid-column: 1; grid-row: 3; background: #f9fafb; border-left: 6px solid #6b7280; border-radius: 8px; padding: 25px;max-height: fit-content; }\n" +
 "    .summary h3 { font-family: 'Permanent Marker', cursive; font-size: 26px; color: #4a5568; margin-bottom: 12px; }\n" +
 "    .summary p { font-size: 16px; line-height: 1.6; color: #333; }\n" +
-"    .key-insight { grid-column: 2; grid-row: 3; background: #fff3cd; border-left: 6px solid #f59e0b; border-radius: 8px; padding: 25px;max-height: fit-content;  }\n" +
-"    .key-insight h3 { font-family: 'Permanent Marker', cursive; font-size: 26px; color: #f59e0b; margin-bottom: 12px; }\n" +
+"    .key-insight { grid-column: 2; grid-row: 3; background: #E0F4F7; border-left: 6px solid #4AB5BE; border-radius: 8px; padding: 25px;max-height: fit-content;  }\n" +
+"    .key-insight h3 { font-family: 'Permanent Marker', cursive; font-size: 26px; color: #2C6E7A; margin-bottom: 12px; }\n" +
 "    .key-insight p { font-size: 18px; line-height: 1.6; color: #333; }\n" +
 "    svg { display: block; }\n" +
 "    .edge { stroke: #cbd5e0; stroke-width: 1.5; stroke-opacity: 0.3; fill: none; }\n" +
@@ -352,14 +335,14 @@ public class PosterGenerator {
 "    .node-box { cursor: pointer; transition: all 0.2s; stroke-width: 2.5; }\n" +
 "    .node-box.keep-doing { fill: #e6f7ed; stroke: #48bb78; }\n" +
 "    .node-box.stop-doing { fill: #fee; stroke: #f56565; }\n" +
-"    .node-box.start-doing { fill: #e6f2ff; stroke: #4299e1; }\n" +
+"    .node-box.start-doing { fill: #E0F4F7; stroke: #4AB5BE; }\n" +
 "    .node-box:hover { stroke-width: 4; filter: brightness(0.95); }\n" +
-"    .node-text { font-size: 16px; fill: #333; pointer-events: none; font-weight: 500; }\n" +
+"    .node-text { font-size: 23px; fill: #333; pointer-events: none; font-weight: 500; }\n" +
 "    .contradiction-node-text { font-size: 16px; fill: #1a202c; pointer-events: none; font-weight: 600; }\n" +
 "    .category-label { font-size: 24px; font-weight: bold; font-family: 'Permanent Marker', cursive; }\n" +
 "    .tension-label { font-size: 14px; fill: #e53e3e; font-weight: bold; font-family: 'Permanent Marker', cursive; }\n" +
 "    .connections-info { text-align: center; font-size: 14px; color: #718096; margin-top: 10px; font-style: italic; }\n" +
-"    @media print { body { background: white; margin: 0; padding: 0; } .poster-wrapper { transform: scale(1); } .poster { box-shadow: none; } }\n" +
+"    @media print { body { background: white; margin: 0; padding: 0; } .poster { box-shadow: none; } }\n" +
 "</style>\n";
     }
     
@@ -396,7 +379,8 @@ public class PosterGenerator {
                 "            rect.setAttribute('rx', 4);\n" +
                 "            g.appendChild(rect);\n" +
                 "            \n" +
-                "            const maxCharsPerLine = Math.floor(node.width / 7);\n" +
+                "            const lineH = 22;\n" +
+                "            const maxCharsPerLine = Math.floor(node.width / 10);\n" +
                 "            const words = node.text.split(' ');\n" +
                 "            let lines = [];\n" +
                 "            let currentLine = words[0];\n" +
@@ -406,14 +390,14 @@ public class PosterGenerator {
                 "                else { lines.push(currentLine); currentLine = words[i]; }\n" +
                 "            }\n" +
                 "            lines.push(currentLine);\n" +
-                "            const maxLines = Math.floor(node.height / 14);\n" +
+                "            const maxLines = Math.floor(node.height / lineH);\n" +
                 "            if (lines.length > maxLines) { lines = lines.slice(0, maxLines - 1); lines.push('...'); }\n" +
-                "            const startY = node.y + (node.height - lines.length * 14) / 2 + 12;\n" +
+                "            const startY = node.y + (node.height - lines.length * lineH) / 2 + lineH - 4;\n" +
                 "            lines.forEach((line, i) => {\n" +
                 "                const text = document.createElementNS(ns, 'text');\n" +
                 "                text.setAttribute('class', 'node-text');\n" +
-                "                text.setAttribute('x', node.x + 6);\n" +
-                "                text.setAttribute('y', startY + (i * 14));\n" +
+                "                text.setAttribute('x', node.x + 8);\n" +
+                "                text.setAttribute('y', startY + (i * lineH));\n" +
                 "                text.textContent = line;\n" +
                 "                g.appendChild(text);\n" +
                 "            });\n" +
@@ -433,8 +417,8 @@ public class PosterGenerator {
                 "        const nodeHeight = 90;\n" +
                 "        const leftX = 100;\n" +
                 "        const rightX = 1235 - nodeWidth - 100;\n" +
-                "        const startY = 100;\n" +
-                "        const verticalSpacing = 140;\n" +
+                "        const startY = 60;\n" +
+                "        const verticalSpacing = 120;\n" +
                 "        \n" +
                 "        contradictionData.forEach((contra, index) => {\n" +
                 "            const y = startY + (index * verticalSpacing);\n" +
@@ -544,9 +528,9 @@ public class PosterGenerator {
                 "        \n" +
                 "        // Category labels for similarity graph\n" +
                 "        const labels = [\n" +
-                "            { text: '✅ KEEP DOING', x: 200, y: 60, color: '#48bb78' },\n" +
-                "            { text: '⭐ START DOING', x: 800, y: 60, color: '#4299e1' },\n" +
-                "            { text: '🛑 STOP DOING', x: 500, y: 600, color: '#f56565' }\n" +
+                "            { text: '✅ KEEP DOING', x: 200, y: 55, color: '#48bb78' },\n" +
+                "            { text: '⭐ START DOING', x: 990, y: 55, color: '#4AB5BE' },\n" +
+                "            { text: '🛑 STOP DOING', x: 600, y: 375, color: '#f56565' }\n" +
                 "        ];\n" +
                 "        labels.forEach(label => {\n" +
                 "            const text = document.createElementNS(ns, 'text');\n" +

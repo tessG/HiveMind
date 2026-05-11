@@ -29,17 +29,17 @@ public class GraphDataService {
                 // Calculate box size based on text length
                 int textLen = stmt.getText().length();
                 if (textLen < 25) {
-                    node.put("width", 80);
-                    node.put("height", 45);
-                } else if (textLen < 40) {
-                    node.put("width", 90);
-                    node.put("height", 50);
-                } else if (textLen < 55) {
-                    node.put("width", 100);
-                    node.put("height", 60);
+                    node.put("width", 180);
+                    node.put("height", 90);
+                } else if (textLen < 45) {
+                    node.put("width", 200);
+                    node.put("height", 108);
+                } else if (textLen < 65) {
+                    node.put("width", 215);
+                    node.put("height", 124);
                 } else {
-                    node.put("width", 110);
-                    node.put("height", 65);
+                    node.put("width", 230);
+                    node.put("height", 140);
                 }
                 
                 nodes.add(node);
@@ -76,56 +76,71 @@ public class GraphDataService {
     
     /**
      * Position nodes for poster layout (3 categories: Keep, Stop, Start)
+     * Uses non-overlapping x zones so groups can never cover each other:
+     *   Keep Doing:  left   x=[20,  380]
+     *   Stop Doing:  center x=[420, 780]  starting at vertical midpoint
+     *   Start Doing: right  x=[820, 1180]
+     * ySpacing is computed dynamically per group to fill the available height.
      */
     public static void positionNodesForPoster(List<Map<String, Object>> nodes) {
         List<Map<String, Object>> keepDoing = new ArrayList<>();
         List<Map<String, Object>> stopDoing = new ArrayList<>();
         List<Map<String, Object>> startDoing = new ArrayList<>();
-        
+
         for (Map<String, Object> node : nodes) {
             String category = (String) node.get("category");
             if (category.equals("Keep Doing")) keepDoing.add(node);
             else if (category.equals("Stop Doing")) stopDoing.add(node);
             else if (category.equals("Start Doing")) startDoing.add(node);
         }
-        
-        // Keep Doing - top left
-        int keepCols = 3;
-        int keepXStart = 40;
-        int keepXSpacing = 110;
-        int keepYStart = 80;
-        int keepYSpacing = 75;
-        
+
+        // 2 columns per zone gives wider nodes and more readable text.
+        // Zones are non-overlapping in x so groups can never cover each other:
+        //   Keep Doing:  x=[20,  445]  (2 cols × 230px, xSpacing=215)
+        //   Stop Doing:  x=[415, 840]  (2 cols × 230px, xSpacing=215, starts at y=midpoint)
+        //   Start Doing: x=[815, 1240] (2 cols × 230px, xSpacing=215)
+        // ySpacing is computed so the last row's bottom edge reaches yBottom exactly.
+        final int cols = 2;
+        final int xSpacing = 215;
+        final int maxNodeHeight = 140;
+        final int svgHeight = 1080;
+        final int yTop = 80;
+        final int yBottom = 1060;
+        final int fullHeight = yBottom - yTop;       // 980px
+        final int stopYStart = svgHeight / 2;        // 540
+        final int stopAvail = yBottom - stopYStart;  // 520px
+
+        // Keep Doing — left zone, full height
+        int keepRows = Math.max(1, (int) Math.ceil((double) keepDoing.size() / cols));
+        int keepYSpacing = keepRows > 1
+                ? Math.min(200, (fullHeight - maxNodeHeight) / (keepRows - 1))
+                : 0;
         for (int i = 0; i < keepDoing.size(); i++) {
             Map<String, Object> node = keepDoing.get(i);
-            node.put("x", keepXStart + (i % keepCols) * keepXSpacing);
-            node.put("y", keepYStart + (i / keepCols) * keepYSpacing);
+            node.put("x", 20 + (i % cols) * xSpacing);
+            node.put("y", yTop + (i / cols) * keepYSpacing);
         }
-        
-        // Start Doing - top right
-        int startCols = 3;
-        int startXStart = 580;
-        int startXSpacing = 110;
-        int startYStart = 80;
-        int startYSpacing = 75;
-        
+
+        // Start Doing — right zone, full height
+        int startRows = Math.max(1, (int) Math.ceil((double) startDoing.size() / cols));
+        int startYSpacing = startRows > 1
+                ? Math.min(200, (fullHeight - maxNodeHeight) / (startRows - 1))
+                : 0;
         for (int i = 0; i < startDoing.size(); i++) {
             Map<String, Object> node = startDoing.get(i);
-            node.put("x", startXStart + (i % startCols) * startXSpacing);
-            node.put("y", startYStart + (i / startCols) * startYSpacing);
+            node.put("x", 815 + (i % cols) * xSpacing);
+            node.put("y", yTop + (i / cols) * startYSpacing);
         }
-        
-        // Stop Doing - bottom center
-        int stopCols = 3;
-        int stopXStart = 330;
-        int stopXSpacing = 110;
-        int stopYStart = 530;
-        int stopYSpacing = 75;
-        
+
+        // Stop Doing — center zone, lower half
+        int stopRows = Math.max(1, (int) Math.ceil((double) stopDoing.size() / cols));
+        int stopYSpacing = stopRows > 1
+                ? Math.min(200, (stopAvail - maxNodeHeight) / (stopRows - 1))
+                : 0;
         for (int i = 0; i < stopDoing.size(); i++) {
             Map<String, Object> node = stopDoing.get(i);
-            node.put("x", stopXStart + (i % stopCols) * stopXSpacing);
-            node.put("y", stopYStart + (i / stopCols) * stopYSpacing);
+            node.put("x", 415 + (i % cols) * xSpacing);
+            node.put("y", stopYStart + (i / cols) * stopYSpacing);
         }
     }
     
