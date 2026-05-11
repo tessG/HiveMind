@@ -203,6 +203,8 @@ public class PosterGenerator {
         prompt.append("     * Padding: 12px\n");
         prompt.append("     * Rotation: -6° til +6°\n");
         prompt.append("     * Subtle box-shadow\n");
+        prompt.append("     * cursor: pointer; z-index: 2; transition: box-shadow 0.2s;\n");
+        prompt.append("     * On hover: z-index: 100; box-shadow: 0 10px 28px rgba(0,0,0,0.22); (brings overlapping bubbles to front)\n");
         prompt.append("   - Placer semantisk nær relateret ord\n");
         prompt.append("   \n");
         prompt.append("   SAMMENFATNING (200px):\n");
@@ -410,6 +412,7 @@ public class PosterGenerator {
                 "                text.textContent = line;\n" +
                 "                g.appendChild(text);\n" +
                 "            });\n" +
+                "            g.addEventListener('mouseenter', () => simSvg.appendChild(g));\n" +
                 "            simSvg.appendChild(g);\n" +
                 "        });\n" +
                 "        \n" +
@@ -495,6 +498,7 @@ public class PosterGenerator {
                 "                text.textContent = line;\n" +
                 "                leftG.appendChild(text);\n" +
                 "            });\n" +
+                "            leftG.addEventListener('mouseenter', () => contraSvg.appendChild(leftG));\n" +
                 "            contraSvg.appendChild(leftG);\n" +
                 "            \n" +
                 "            // Right node\n" +
@@ -532,6 +536,7 @@ public class PosterGenerator {
                 "                text.textContent = line;\n" +
                 "                rightG.appendChild(text);\n" +
                 "            });\n" +
+                "            rightG.addEventListener('mouseenter', () => contraSvg.appendChild(rightG));\n" +
                 "            contraSvg.appendChild(rightG);\n" +
                 "        });\n" +
                 "        \n" +

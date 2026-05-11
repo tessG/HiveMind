@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
 
 /**
  * Simple web interface for Student Evaluation Tool
@@ -100,18 +101,38 @@ public class WebController {
                     opacity: 0.95;
                     letter-spacing: 0.3px;
                 }
+                .cards-row {
+                    display: flex;
+                    gap: 25px;
+                    align-items: stretch;
+                    margin-bottom: 25px;
+                }
+
                 .card {
+                    flex: 1;
                     background: white;
                     border-radius: 16px;
                     padding: 35px;
-                    margin-bottom: 25px;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+                    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
                     transition: transform 0.2s, box-shadow 0.2s;
+                    display: flex;
+                    flex-direction: column;
                 }
-                
+
+                .card form {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .card form button {
+                    margin-top: auto;
+                    padding-top: 25px;
+                }
+
                 .card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+                    transform: translateY(-4px);
+                    box-shadow: 0 8px 28px rgba(0,0,0,0.12);
                 }
                 
                 .card-header {
@@ -318,7 +339,11 @@ public class WebController {
                     .brand-name {
                         font-size: 42px;
                     }
-                    
+
+                    .cards-row {
+                        flex-direction: column;
+                    }
+
                     .card {
                         padding: 25px;
                     }
@@ -347,52 +372,54 @@ public class WebController {
                 
              
                 
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-icon">🌐</div>
-                        <div class="card-title">
-                            <h2>Option 1: From Padlet Board</h2>
-                            <p>Connect to a live Padlet board and analyze student evaluations. (Board must be shared with tess@ek.dk)</p>
+                <div class="cards-row">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">🌐</div>
+                            <div class="card-title">
+                                <h2>Option 1: From Padlet Board</h2>
+                                <p>Connect to a live Padlet board and analyze student evaluations. (Board must be shared with tess@ek.dk)</p>
+                            </div>
                         </div>
+
+                        <form id="padletForm" action="/evaluate/padlet" method="post">
+                            <label for="type">Evaluation Type</label>
+                            <select name="type" id="type" required>
+                                <option value="dare-share-care">Dare-Share-Care</option>
+                                <option value="delphi">Delphi (Keep/Stop/Start)</option>
+                                <option value="delphi-4">Delphi (4 categories)</option>
+                            </select>
+
+                            <label for="padletId">Padlet Board ID</label>
+                            <input type="text" name="padletId" id="padletId"
+                                   placeholder="Enter Padlet board ID (e.g., abc123xyz)" required>
+
+                            <button type="submit">🚀 Generate from Padlet</button>
+                        </form>
                     </div>
-                    
-                    <form id="padletForm" action="/evaluate/padlet" method="post">
-                        <label for="type">Evaluation Type</label>
-                        <select name="type" id="type" required>
-                            <option value="dare-share-care">Dare-Share-Care</option>
-                            <option value="delphi">Delphi (Keep/Stop/Start)</option>
-                            <option value="delphi-4">Delphi (4 categories)</option>
-                        </select>
-                        
-                        <label for="padletId">Padlet Board ID</label>
-                        <input type="text" name="padletId" id="padletId" 
-                               placeholder="Enter Padlet board ID (e.g., abc123xyz)" required>
-                        
-                        <button type="submit">🚀 Generate from Padlet</button>
-                    </form>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-icon">📄</div>
-                        <div class="card-title">
-                            <h2>Option 2: Upload CSV File</h2>
-                            <p>Upload pre-categorized evaluation data from your device</p>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">📄</div>
+                            <div class="card-title">
+                                <h2>Option 2: Upload CSV File</h2>
+                                <p>Upload pre-categorized evaluation data from your device</p>
+                            </div>
                         </div>
+
+                        <form id="csvForm" action="/evaluate/csv" method="post" enctype="multipart/form-data">
+                            <label for="file">CSV File</label>
+                            <input type="file" name="file" id="file" accept=".csv" required>
+
+                            <label for="csvType">Delphi Format</label>
+                            <select name="evaluationType" id="csvType">
+                                <option value="delphi">Keep/Stop/Start (3 categories)</option>
+                                <option value="delphi-4">4 categories</option>
+                            </select>
+
+                            <button type="submit">📤 Generate from CSV</button>
+                        </form>
                     </div>
-                    
-                    <form id="csvForm" action="/evaluate/csv" method="post" enctype="multipart/form-data">
-                        <label for="file">CSV File</label>
-                        <input type="file" name="file" id="file" accept=".csv" required>
-                        
-                        <label for="csvType">Delphi Format</label>
-                        <select name="evaluationType" id="csvType">
-                            <option value="delphi">Keep/Stop/Start (3 categories)</option>
-                            <option value="delphi-4">4 categories</option>
-                        </select>
-                        
-                        <button type="submit">📤 Generate from CSV</button>
-                    </form>
                 </div>
             </div>
             
@@ -508,39 +535,54 @@ public class WebController {
         try {
             System.out.println("📥 Processing CSV upload: " + file.getOriginalFilename());
 
-            // Validate file
             if (file.isEmpty()) {
                 throw new RuntimeException("Uploaded file is empty");
             }
-
             if (!file.getOriginalFilename().endsWith(".csv")) {
                 throw new RuntimeException("File must be a CSV file");
             }
 
-            // Save to temporary file
-            Path tempCsv = Files.createTempFile("upload-", ".csv");
-            file.transferTo(tempCsv.toFile());
+            byte[] fileBytes = file.getBytes();
+            String hash = computeSha256(fileBytes);
+            Path cacheDir = Paths.get("cache");
+            Files.createDirectories(cacheDir);
+            Path cachedPoster = cacheDir.resolve(hash + "-" + evaluationType + ".html");
 
-            System.out.println("💾 Saved to temp file: " + tempCsv);
+            if (Files.exists(cachedPoster)) {
+                System.out.println("✅ Cache hit — returning cached poster");
+                return generatePreviewPage(cachedPoster.toString());
+            }
+
+            System.out.println("🔄 Cache miss — processing CSV");
+            Path tempCsv = Files.createTempFile("upload-", ".csv");
+            Files.write(tempCsv, fileBytes);
 
             GenericEvaluationWorkflow workflow = new GenericEvaluationWorkflow();
-            String posterPath = workflow.executeDelphiFromCsv(
-                    tempCsv.toString(),
-                    evaluationType
-            );
+            String posterPath = workflow.executeDelphiFromCsv(tempCsv.toString(), evaluationType);
 
-            System.out.println("✅ Poster generated: " + posterPath);
-
-            // Cleanup temp file
             Files.deleteIfExists(tempCsv);
 
-            // Return preview page
+            Files.copy(Paths.get(posterPath), cachedPoster);
+            System.out.println("💾 Cached as: " + cachedPoster);
+
             return generatePreviewPage(posterPath);
 
         } catch (Exception e) {
             System.err.println("❌ Error processing CSV: " + e.getMessage());
             e.printStackTrace();
             return generateErrorPage("Error processing CSV: " + e.getMessage());
+        }
+    }
+
+    private String computeSha256(byte[] data) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(data);
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) hex.append(String.format("%02x", b));
+            return hex.toString().substring(0, 16);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to hash CSV", e);
         }
     }
 
