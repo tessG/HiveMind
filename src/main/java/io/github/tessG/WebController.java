@@ -459,27 +459,13 @@ public class WebController {
 
                 
 
-                <div class="demo-section">
-                    <p class="demo-label">👀 Prøv med eksempeldata</p>
-                    <div class="demo-buttons">
-                        <a href="/demo/delphi" class="demo-btn" onclick="showLoading('Demo')">
-                            <span class="demo-icon">📊</span>
-                            <span>Delphi</span>
-                            <span class="demo-sub">Keep / Stop / Start</span>
-                        </a>
-                        <a href="/demo/dsc" class="demo-btn" onclick="showLoading('Demo')">
-                            <span class="demo-icon">💬</span>
-                            <span>Dare Share Care</span>
-                            <span class="demo-sub">3 kategorier</span>
-                        </a>
-                    </div>
-                </div>
+               
 
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-icon">📊</div>
+                        
                         <div class="card-title">
-                            <h2>Generer evaluerings-plakat</h2>
+                            <h2>Generer plakat</h2>
                             <p>Analysér studerendes svar og skab et visuelt overblik</p>
                         </div>
                     </div>
@@ -488,7 +474,7 @@ public class WebController {
                         <input type="hidden" id="hidType" name="type">
                         <input type="hidden" id="hidEvalType" name="evaluationType">
 
-                        <label for="evalType">Evaluationstype</label>
+                        <label for="evalType">Evalueringstype</label>
                         <select id="evalType">
                             <option value="dare-share-care">Dare-Share-Care</option>
                             <option value="delphi">Delphi (Keep/Stop/Start)</option>
@@ -509,10 +495,26 @@ public class WebController {
                             <input type="text" id="padletIdInput" name="padletId" placeholder="f.eks. abc123xyz">
                         </div>
 
-                        <button type="button" class="submit-btn" onclick="submitForm()">🚀 Generer plakat</button>
+                        <button type="button" class="submit-btn" onclick="submitForm()"Generer plakat</button>
                     </form>
                 </div>
             </div>
+            
+             <div class="demo-section">
+                    <p class="demo-label"> Prøv med eksempeldata</p>
+                    <div class="demo-buttons">
+                        <a href="/demo/delphi" class="demo-btn" onclick="showLoading('Demo')">
+                           
+                            <span>Delphi</span>
+                            <span class="demo-sub">Keep / Stop / Start</span>
+                        </a>
+                        <a href="/demo/dsc" class="demo-btn" onclick="showLoading('Demo')">
+                     
+                            <span>Dare Share Care</span>
+                            <span class="demo-sub">3 kategorier</span>
+                        </a>
+                    </div>
+                </div>
             <!-- Loading Overlay -->
             <div id="loadingOverlay" class="loading-overlay">
                 <div class="loading-box">

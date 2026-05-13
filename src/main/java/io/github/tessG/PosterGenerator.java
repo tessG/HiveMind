@@ -7,6 +7,10 @@ import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.models.messages.MessageCreateParams;
 import com.anthropic.models.messages.Message;
 
+import java.nio.file.*;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 /**
@@ -112,18 +116,24 @@ public class PosterGenerator {
         html +=  "</body></html>";*/
 
 
-         //To have claude generate the HTML call this:
+        // Cache DSC poster by content hash so Claude is not called again for the same data
+        String cacheKey = computeDscCacheKey(statements, config.getType());
+        Path cacheFile = Paths.get("cache", cacheKey + "-dsc-poster.html");
+        if (Files.exists(cacheFile)) {
+            System.out.println("📦 DSC poster cache hit");
+            return Files.readString(cacheFile);
+        }
+
         AnthropicClient client = AnthropicOkHttpClient.fromEnv();
 
         MessageCreateParams params = MessageCreateParams.builder()
                 .model(MODEL)
-                .maxTokens(8000)  // Increased for HTML generation
-                .addUserMessage(buildDSCPrompt(statements,headline,funnyStatement,summary,keyInsight, config))
+                .maxTokens(8000)
+                .addUserMessage(buildDSCPrompt(statements, headline, funnyStatement, summary, keyInsight, config))
                 .build();
 
         Message message = client.messages().create(params);
 
-        // Extract text properly to avoid debug output
         String response = String.valueOf(message.content().get(0).text());
 
 
@@ -151,7 +161,31 @@ public class PosterGenerator {
                 html = html.substring(docStart);
             }
         }
+
+        try {
+            Files.createDirectories(Paths.get("cache"));
+            Files.writeString(cacheFile, html);
+            System.out.println("💾 DSC poster cached");
+        } catch (Exception e) {
+            System.err.println("DSC poster cache write failed: " + e.getMessage());
+        }
+
         return html;
+    }
+
+    private static String computeDscCacheKey(List<String> statements, String evaluationType) {
+        try {
+            List<String> sorted = new ArrayList<>(statements);
+            Collections.sort(sorted);
+            String input = "dsc-poster:" + evaluationType + ":" + String.join("|", sorted);
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes("UTF-8"));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) hex.append(String.format("%02x", b));
+            return hex.toString().substring(0, 32);
+        } catch (Exception e) {
+            return String.valueOf(statements.hashCode());
+        }
     }
 
     private static String buildDSCPrompt(List<String> statements,String headline, String funnyStatement,String summary,String keyInsight, EvaluationConfig config) {
@@ -365,102 +399,167 @@ public class PosterGenerator {
 "const ns = 'http://www.w3.org/2000/svg';\n" +
 "const simSvg = document.getElementById('similarityGraph');\n" +
 "const contraSvg = document.getElementById('contradictionGraph');\n" +
-"function makeBubble(x, y, w, h) {\n" +
-"    const r = 8;\n" +
-"    return `M ${x+r} ${y} H ${x+w-r} Q ${x+w} ${y} ${x+w} ${y+r} V ${y+h-r} Q ${x+w} ${y+h} ${x+w-r} ${y+h} H ${x+28} L ${x+16} ${y+h+14} L ${x+12} ${y+h} H ${x+r} Q ${x} ${y+h} ${x} ${y+h-r} V ${y+r} Q ${x} ${y} ${x+r} ${y} Z`;\n" +
-"}\n" +
-"function catStroke(cat) {\n" +
+"function catConfig(cat) {\n" +
 "    const c = cat.toLowerCase();\n" +
-"    if (c.includes('keep')) return '#48bb78';\n" +
-"    if (c.includes('stop')) return '#f56565';\n" +
-"    return '#4AB5BE';\n" +
+"    if (c.includes('keep')) return { fill: '#e6f7ed', stroke: '#48bb78', text: '#276749', bg: 'rgba(72,187,120,0.07)' };\n" +
+"    if (c.includes('stop')) return { fill: '#fff5f5', stroke: '#f56565', text: '#c53030', bg: 'rgba(245,101,101,0.07)' };\n" +
+"    return { fill: '#E0F4F7', stroke: '#4AB5BE', text: '#2C6E7A', bg: 'rgba(74,181,190,0.07)' };\n" +
+"}\n" +
+"function wrapSvgText(el, text, cx, cy, maxHW, lineH, chW) {\n" +
+"    chW = chW || 5.9;\n" +
+"    const words = text.split(' ');\n" +
+"    const lines = [];\n" +
+"    let cur = '';\n" +
+"    words.forEach(w => {\n" +
+"        const test = cur ? cur + ' ' + w : w;\n" +
+"        if (test.length * chW > maxHW * 2 && cur) { lines.push(cur); cur = w; }\n" +
+"        else cur = test;\n" +
+"    });\n" +
+"    if (cur) lines.push(cur);\n" +
+"    const startY = cy - ((lines.length - 1) * lineH) / 2;\n" +
+"    lines.forEach((l, i) => {\n" +
+"        const ts = document.createElementNS(ns, 'tspan');\n" +
+"        ts.setAttribute('x', cx); ts.setAttribute('y', startY + i * lineH);\n" +
+"        ts.textContent = l;\n" +
+"        el.appendChild(ts);\n" +
+"    });\n" +
 "}\n" +
 "const svgW = parseInt(simSvg.getAttribute('width'));\n" +
 "const svgH = parseInt(simSvg.getAttribute('height'));\n" +
-"const tailH = 18;\n" +
-"const pad = 8;\n" +
-"const zoneOrder = ['keep', 'stop', 'start'];\n" +
-"const zones = { keep: [], stop: [], start: [] };\n" +
+"simSvg.style.overflow = 'visible';\n" +
+"const r = 44;\n" +
+"const availR = Math.min(svgW * 0.17, svgH * 0.21);\n" +
+"const clusters = [\n" +
+"    { key: 'keep', cx: svgW * 0.22, cy: svgH * 0.27 },\n" +
+"    { key: 'start', cx: svgW * 0.78, cy: svgH * 0.27 },\n" +
+"    { key: 'stop', cx: svgW * 0.50, cy: svgH * 0.74 }\n" +
+"];\n" +
+"const catGroups = { keep: [], stop: [], start: [] };\n" +
 "similarityData.nodes.forEach(node => {\n" +
 "    const c = node.category.toLowerCase();\n" +
-"    if (c.includes('keep')) zones.keep.push(node);\n" +
-"    else if (c.includes('stop')) zones.stop.push(node);\n" +
-"    else zones.start.push(node);\n" +
+"    if (c.includes('keep')) catGroups.keep.push(node);\n" +
+"    else if (c.includes('stop')) catGroups.stop.push(node);\n" +
+"    else catGroups.start.push(node);\n" +
 "});\n" +
-"const zoneW = svgW / 3;\n" +
-"zoneOrder.forEach((key, zi) => {\n" +
-"    const group = zones[key];\n" +
-"    const n = group.length;\n" +
-"    if (!n) return;\n" +
-"    const cols = Math.max(1, Math.ceil(Math.sqrt(n * zoneW / svgH)));\n" +
-"    const rows = Math.ceil(n / cols);\n" +
-"    const cellW = zoneW / cols;\n" +
-"    const cellH = svgH / rows;\n" +
-"    const gridPos = Array.from({length: n}, (_, i) => ({col: i % cols, row: Math.floor(i / cols)}));\n" +
-"    for (let i = gridPos.length - 1; i > 0; i--) {\n" +
-"        const j = Math.floor(Math.random() * (i + 1));\n" +
-"        [gridPos[i], gridPos[j]] = [gridPos[j], gridPos[i]];\n" +
-"    }\n" +
-"    group.forEach((node, i) => {\n" +
-"        const {col, row} = gridPos[i];\n" +
-"        const zoneX = zi * zoneW;\n" +
-"        const jitX = (cellW - node.width) * 0.25 * (Math.random() - 0.5);\n" +
-"        const jitY = (cellH - node.height - tailH) * 0.25 * (Math.random() - 0.5);\n" +
-"        node.x = Math.max(zoneX + pad, Math.min(zoneX + zoneW - node.width - pad, zoneX + col * cellW + (cellW - node.width) / 2 + jitX));\n" +
-"        node.y = Math.max(pad, Math.min(svgH - node.height - tailH - pad, row * cellH + (cellH - node.height - tailH) / 2 + jitY));\n" +
+"clusters.forEach(cluster => {\n" +
+"    const nodes = catGroups[cluster.key];\n" +
+"    const n = nodes.length;\n" +
+"    if (!n) { cluster.visR = 0; return; }\n" +
+"    if (n === 1) { nodes[0].cx = cluster.cx; nodes[0].cy = cluster.cy; cluster.visR = r + 16; return; }\n" +
+"    let rings;\n" +
+"    if (n <= 7) rings = [n];\n" +
+"    else if (n <= 14) { const n0 = Math.ceil(n * 0.62); rings = [n0, n - n0]; }\n" +
+"    else { const n0 = Math.ceil(n * 0.52); const n1 = Math.ceil((n - n0) * 0.65); rings = [n0, n1, n - n0 - n1]; }\n" +
+"    const rfracs = [0.72, 0.43, 0.18];\n" +
+"    let idx = 0;\n" +
+"    rings.forEach((count, ri) => {\n" +
+"        const ringR = count <= 1 ? 0 : availR * rfracs[ri];\n" +
+"        for (let i = 0; i < count && idx < n; i++, idx++) {\n" +
+"            const a = count <= 1 ? 0 : (2 * Math.PI * i / count) - Math.PI / 2;\n" +
+"            nodes[idx].cx = cluster.cx + ringR * Math.cos(a);\n" +
+"            nodes[idx].cy = cluster.cy + ringR * Math.sin(a);\n" +
+"        }\n" +
 "    });\n" +
+"    cluster.visR = availR + r + 12;\n" +
 "});\n" +
-"// Draw edges\n" +
-                "        similarityData.edges.forEach(edge => {\n" +
-                "            const source = similarityData.nodes[edge.source];\n" +
-                "            const target = similarityData.nodes[edge.target];\n" +
-                "            const line = document.createElementNS(ns, 'line');\n" +
-                "            line.setAttribute('class', edge.similarity > 0.55 ? 'edge strong' : 'edge');\n" +
-                "            line.setAttribute('x1', source.x + source.width/2);\n" +
-                "            line.setAttribute('y1', source.y + source.height/2);\n" +
-                "            line.setAttribute('x2', target.x + target.width/2);\n" +
-                "            line.setAttribute('y2', target.y + target.height/2);\n" +
-                "            simSvg.appendChild(line);\n" +
-                "        });\n" +
-                "        \n" +
-                "        // Draw nodes as speech bubbles\n" +
-                "        similarityData.nodes.forEach(node => {\n" +
-                "            const g = document.createElementNS(ns, 'g');\n" +
-                "            const angle = (Math.random() * 14 - 7).toFixed(1);\n" +
-                "            g.setAttribute('transform', `rotate(${angle}, ${node.x + node.width/2}, ${node.y + node.height/2})`);\n" +
-                "            const bubble = document.createElementNS(ns, 'path');\n" +
-                "            bubble.setAttribute('d', makeBubble(node.x, node.y, node.width, node.height));\n" +
-                "            bubble.setAttribute('fill', 'white');\n" +
-                "            bubble.setAttribute('stroke', catStroke(node.category));\n" +
-                "            bubble.setAttribute('stroke-width', '2.5');\n" +
-                "            bubble.setAttribute('stroke-linejoin', 'round');\n" +
-                "            bubble.style.cursor = 'pointer';\n" +
-                "            g.appendChild(bubble);\n" +
-                "            const lineH = 22;\n" +
-                "            const maxCharsPerLine = Math.floor(node.width / 10);\n" +
-                "            const words = node.text.split(' ');\n" +
-                "            let lines = [];\n" +
-                "            let currentLine = words[0];\n" +
-                "            for (let i = 1; i < words.length; i++) {\n" +
-                "                const testLine = currentLine + ' ' + words[i];\n" +
-                "                if (testLine.length < maxCharsPerLine) currentLine = testLine;\n" +
-                "                else { lines.push(currentLine); currentLine = words[i]; }\n" +
-                "            }\n" +
-                "            lines.push(currentLine);\n" +
-                "            const maxLines = Math.floor(node.height / lineH);\n" +
-                "            if (lines.length > maxLines) { lines = lines.slice(0, maxLines - 1); lines.push('...'); }\n" +
-                "            const startY = node.y + (node.height - lines.length * lineH) / 2 + lineH - 4;\n" +
-                "            lines.forEach((line, i) => {\n" +
-                "                const text = document.createElementNS(ns, 'text');\n" +
-                "                text.setAttribute('class', 'node-text');\n" +
-                "                text.setAttribute('x', node.x + 8);\n" +
-                "                text.setAttribute('y', startY + (i * lineH));\n" +
-                "                text.textContent = line;\n" +
-                "                g.appendChild(text);\n" +
-                "            });\n" +
-                "            g.addEventListener('mouseenter', () => simSvg.appendChild(g));\n" +
-                "            simSvg.appendChild(g);\n" +
-                "        });\n" +
+"similarityData.edges.forEach(edge => {\n" +
+"    const src = similarityData.nodes[edge.source];\n" +
+"    const tgt = similarityData.nodes[edge.target];\n" +
+"    if (src.cx == null || tgt.cx == null) return;\n" +
+"    const ln = document.createElementNS(ns, 'line');\n" +
+"    ln.setAttribute('x1', src.cx); ln.setAttribute('y1', src.cy);\n" +
+"    ln.setAttribute('x2', tgt.cx); ln.setAttribute('y2', tgt.cy);\n" +
+"    ln.setAttribute('stroke', '#a0aec0');\n" +
+"    ln.setAttribute('stroke-width', edge.similarity > 0.55 ? '1.5' : '0.8');\n" +
+"    ln.setAttribute('stroke-opacity', '0.22');\n" +
+"    simSvg.appendChild(ln);\n" +
+"});\n" +
+"clusters.forEach(cluster => {\n" +
+"    if (!cluster.visR) return;\n" +
+"    const cfg = catConfig(cluster.key);\n" +
+"    const bg = document.createElementNS(ns, 'circle');\n" +
+"    bg.setAttribute('cx', cluster.cx); bg.setAttribute('cy', cluster.cy);\n" +
+"    bg.setAttribute('r', cluster.visR);\n" +
+"    bg.setAttribute('fill', cfg.bg);\n" +
+"    bg.setAttribute('stroke', cfg.stroke);\n" +
+"    bg.setAttribute('stroke-width', '2');\n" +
+"    bg.setAttribute('stroke-dasharray', '8 5');\n" +
+"    bg.setAttribute('stroke-opacity', '0.5');\n" +
+"    simSvg.appendChild(bg);\n" +
+"});\n" +
+"const popR = r * 2.8;\n" +
+"const popG = document.createElementNS(ns, 'g');\n" +
+"popG.style.cursor = 'default';\n" +
+"popG.style.display = 'none';\n" +
+"const popBg = document.createElementNS(ns, 'circle');\n" +
+"popBg.setAttribute('cx', svgW / 2); popBg.setAttribute('cy', svgH / 2);\n" +
+"popBg.setAttribute('r', popR);\n" +
+"popBg.setAttribute('stroke-width', '4');\n" +
+"popG.appendChild(popBg);\n" +
+"const popTxt = document.createElementNS(ns, 'text');\n" +
+"popTxt.setAttribute('text-anchor', 'middle');\n" +
+"popTxt.setAttribute('font-size', '23');\n" +
+"popTxt.setAttribute('font-weight', '600');\n" +
+"popTxt.setAttribute('pointer-events', 'none');\n" +
+"popG.appendChild(popTxt);\n" +
+"simSvg.appendChild(popG);\n" +
+"let hideTimer = null;\n" +
+"let activeCircle = null;\n" +
+"function cancelHide() { clearTimeout(hideTimer); }\n" +
+"function scheduleHide() {\n" +
+"    hideTimer = setTimeout(() => {\n" +
+"        popG.style.display = 'none';\n" +
+"        if (activeCircle) {\n" +
+"            activeCircle.setAttribute('stroke-width', '2.5');\n" +
+"            activeCircle.setAttribute('opacity', '1');\n" +
+"            activeCircle = null;\n" +
+"        }\n" +
+"    }, 140);\n" +
+"}\n" +
+"popG.addEventListener('mouseenter', cancelHide);\n" +
+"popG.addEventListener('mouseleave', scheduleHide);\n" +
+"similarityData.nodes.forEach(node => {\n" +
+"    if (node.cx == null) return;\n" +
+"    const cfg = catConfig(node.category);\n" +
+"    const g = document.createElementNS(ns, 'g');\n" +
+"    g.style.cursor = 'pointer';\n" +
+"    const circle = document.createElementNS(ns, 'circle');\n" +
+"    circle.setAttribute('cx', node.cx); circle.setAttribute('cy', node.cy);\n" +
+"    circle.setAttribute('r', r);\n" +
+"    circle.setAttribute('fill', cfg.fill);\n" +
+"    circle.setAttribute('stroke', cfg.stroke);\n" +
+"    circle.setAttribute('stroke-width', '2.5');\n" +
+"    g.appendChild(circle);\n" +
+"    const abbr = node.text.length > 35 ? node.text.substring(0, 32) + '\\u2026' : node.text;\n" +
+"    const shortEl = document.createElementNS(ns, 'text');\n" +
+"    shortEl.setAttribute('text-anchor', 'middle');\n" +
+"    shortEl.setAttribute('fill', cfg.text);\n" +
+"    shortEl.setAttribute('font-size', '11');\n" +
+"    shortEl.setAttribute('font-weight', '500');\n" +
+"    shortEl.setAttribute('pointer-events', 'none');\n" +
+"    wrapSvgText(shortEl, abbr, node.cx, node.cy, r * 0.88, 14);\n" +
+"    g.appendChild(shortEl);\n" +
+"    simSvg.appendChild(g);\n" +
+"    g.addEventListener('mouseenter', () => {\n" +
+"        cancelHide();\n" +
+"        if (activeCircle && activeCircle !== circle) {\n" +
+"            activeCircle.setAttribute('stroke-width', '2.5');\n" +
+"            activeCircle.setAttribute('opacity', '1');\n" +
+"        }\n" +
+"        activeCircle = circle;\n" +
+"        simSvg.appendChild(g);\n" +
+"        circle.setAttribute('stroke-width', '5');\n" +
+"        circle.setAttribute('opacity', '0.7');\n" +
+"        popBg.setAttribute('fill', cfg.fill);\n" +
+"        popBg.setAttribute('stroke', cfg.stroke);\n" +
+"        popTxt.setAttribute('fill', cfg.text);\n" +
+"        while (popTxt.firstChild) popTxt.removeChild(popTxt.firstChild);\n" +
+"        wrapSvgText(popTxt, node.text, svgW / 2, svgH / 2, popR * 0.82, 30, 12.5);\n" +
+"        popG.style.display = '';\n" +
+"        simSvg.appendChild(popG);\n" +
+"    });\n" +
+"    g.addEventListener('mouseleave', scheduleHide);\n" +
+"});\n" +
                 "        \n" +
                 "        // CONTRADICTION GRAPH\n" +
                 "       // const contraSvg = document.getElementById('contradictionGraph');\n" +
